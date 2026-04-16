@@ -1,0 +1,9 @@
+provisioning/inventory/hosts
+provisioning/group_vars/all.yml
+*.retry
+.vault_pass
+*.pem
+*.key
+*.crt
+secrets/
+.env

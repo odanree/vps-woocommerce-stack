@@ -1,0 +1,49 @@
+---
+- name: Install Netdata via official installer
+  shell: |
+    wget -O /tmp/netdata-install.sh https://my-netdata.io/kickstart.sh
+    sh /tmp/netdata-install.sh --non-interactive --stable-channel --disable-telemetry
+  args:
+    creates: /usr/sbin/netdata
+  register: netdata_install
+
+- name: Install Netdata config
+  copy:
+    src: "{{ playbook_dir }}/../monitoring/netdata.conf"
+    dest: /etc/netdata/netdata.conf
+    owner: netdata
+    group: netdata
+    mode: "0640"
+  notify: Restart netdata
+
+- name: Enable Netdata MySQL plugin
+  copy:
+    content: |
+      [mysql]
+        command = /usr/bin/mysqladmin -u netdata status
+    dest: /etc/netdata/python.d/mysql.conf
+    owner: netdata
+    group: netdata
+    mode: "0640"
+  notify: Restart netdata
+
+- name: Create Netdata MySQL user (read-only)
+  mysql_user:
+    name: netdata
+    host: localhost
+    priv: "*.*:USAGE"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Block Netdata port via UFW (LAN only - tunnel via SSH)
+  ufw:
+    rule: deny
+    port: "19999"
+    proto: tcp
+
+- name: Enable and start Netdata
+  systemd:
+    name: netdata
+    state: started
+    enabled: true

@@ -1,0 +1,63 @@
+---
+# Main provisioning playbook for vps-woocommerce-stack
+# Run: ansible-playbook -i inventory/hosts site.yml
+
+- name: Provision WooCommerce VPS
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - wget
+          - gnupg2
+          - ca-certificates
+          - lsb-release
+          - unzip
+          - git
+          - acl
+          - python3-pip
+          - python3-pymysql
+        state: present
+
+    - name: Set server timezone
+      timezone:
+        name: "{{ server_timezone }}"
+
+  roles:
+    - security      # UFW + fail2ban + SSH hardening (run first)
+    - mysql         # MySQL 8.0 with tuned InnoDB config
+    - redis         # Redis 7 object cache
+    - nginx         # Nginx + PHP-FPM 8.3
+    - certbot       # Let's Encrypt TLS (runs after Nginx to validate domain)
+    - netdata       # Real-time monitoring agent
+
+  post_tasks:
+    - name: Ensure all services are started and enabled
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - nginx
+        - mysql
+        - redis-server
+        - php{{ php_version }}-fpm
+        - fail2ban
+        - netdata
+
+    - name: Print provisioning complete message
+      debug:
+        msg: |
+          Provisioning complete!
+          Site: https://{{ server_domain }}
+          Netdata: ssh -L 19999:localhost:19999 {{ deploy_user }}@{{ inventory_hostname }}
+          Run smoke test: ./scripts/smoke-test.sh {{ server_domain }}

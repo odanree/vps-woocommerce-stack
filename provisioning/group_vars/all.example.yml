@@ -1,0 +1,42 @@
+# Copy this file to all.yml and fill in real values.
+# all.yml is gitignored — never commit passwords.
+
+# Server identity
+server_domain: "shop.example.com"
+server_timezone: "America/Chicago"
+deploy_user: "ubuntu"
+
+# WordPress / WooCommerce
+wp_db_name: "wordpress"
+wp_db_user: "wp_app"
+wp_db_password: "CHANGE_ME_strong_password"
+wp_db_host: "127.0.0.1"
+wp_table_prefix: "wp_"
+
+# Redis
+redis_maxmemory: "256mb"
+redis_bind: "127.0.0.1"
+redis_port: 6379
+
+# MySQL
+mysql_root_password: "CHANGE_ME_root_password"
+mysql_innodb_buffer_pool_size: "2G"   # ~50% of RAM for 4 GB box
+
+# PHP-FPM
+php_version: "8.3"
+php_fpm_pm_max_children: 10
+php_fpm_pm_start_servers: 3
+php_fpm_pm_min_spare_servers: 2
+php_fpm_pm_max_spare_servers: 5
+
+# Certbot / Let's Encrypt
+certbot_email: "admin@example.com"
+certbot_staging: false   # set true for testing to avoid rate limits
+
+# Security
+ssh_allowed_users:
+  - ubuntu
+fail2ban_bantime: 3600
+fail2ban_maxretry_ssh: 5
+fail2ban_maxretry_wp: 10
+fail2ban_maxretry_xmlrpc: 3

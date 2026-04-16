@@ -1,0 +1,98 @@
+# Nginx site config for WordPress/WooCommerce
+# Managed by Ansible — do not edit by hand
+# Final TLS config installed after certbot runs
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name {{ server_domain }} www.{{ server_domain }};
+
+    # Redirect all HTTP to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name {{ server_domain }} www.{{ server_domain }};
+
+    root /var/www/{{ server_domain }};
+    index index.php;
+
+    # TLS certificates (Certbot populates these)
+    ssl_certificate /etc/letsencrypt/live/{{ server_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ server_domain }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    # Security headers
+    include /etc/nginx/snippets/security-headers.conf;
+
+    # Structured access logging
+    access_log /var/log/nginx/{{ server_domain }}.access.log combined_json;
+    error_log  /var/log/nginx/{{ server_domain }}.error.log warn;
+
+    # Max upload size — match PHP settings
+    client_max_body_size 64M;
+
+    # WordPress permalinks
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # Block sensitive files
+    location ~ /\. {
+        deny all;
+    }
+    location = /xmlrpc.php {
+        # Allow WooCommerce mobile app; block everything else
+        # Disable entirely by returning 403 if xmlrpc is not needed
+        deny all;
+        return 403;
+    }
+    location ~* /wp-config\.php {
+        deny all;
+    }
+
+    # WordPress login rate limiting (requires limit_req_zone in nginx.conf)
+    location = /wp-login.php {
+        limit_req zone=wp_login burst=3 nodelay;
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php{{ php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # PHP execution
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php{{ php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_read_timeout 300;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+    }
+
+    # PHP-FPM status — localhost only
+    location = /fpm-status {
+        allow 127.0.0.1;
+        deny all;
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php{{ php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # Static asset caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        log_not_found off;
+    }
+
+    # WooCommerce: never cache cart, checkout, account pages
+    set $no_cache 0;
+    if ($request_uri ~* "/(cart|checkout|my-account)") {
+        set $no_cache 1;
+    }
+    if ($cookie_woocommerce_items_in_cart) {
+        set $no_cache 1;
+    }
+}

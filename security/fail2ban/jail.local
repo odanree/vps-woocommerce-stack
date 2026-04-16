@@ -1,0 +1,66 @@
+# fail2ban local overrides — WooCommerce VPS
+# /etc/fail2ban/jail.local
+
+[DEFAULT]
+bantime  = 3600
+findtime = 600
+maxretry = 5
+
+# Email notifications (optional — configure sendmail first)
+# destemail = admin@example.com
+# action = %(action_mwl)s
+
+# Ignore localhost and VPN IPs
+ignoreip = 127.0.0.1/8 ::1
+
+# ─────────────────────────────────────────
+# SSH jail
+# ─────────────────────────────────────────
+[sshd]
+enabled  = true
+port     = ssh
+filter   = sshd
+logpath  = /var/log/auth.log
+maxretry = 5
+bantime  = 3600
+
+# ─────────────────────────────────────────
+# WordPress login brute-force
+# ─────────────────────────────────────────
+[wordpress-login]
+enabled   = true
+filter    = wordpress
+port      = http,https
+logpath   = /var/log/nginx/*.access.log
+maxretry  = 10
+findtime  = 600
+bantime   = 3600
+
+# ─────────────────────────────────────────
+# WordPress xmlrpc — very aggressive ban
+# xmlrpc is a common amplification vector (pingback DDoS)
+# ─────────────────────────────────────────
+[wordpress-xmlrpc]
+enabled   = true
+filter    = wordpress
+port      = http,https
+logpath   = /var/log/nginx/*.access.log
+maxretry  = 3
+findtime  = 60
+bantime   = 86400   # 24-hour ban for xmlrpc probing
+
+# ─────────────────────────────────────────
+# Nginx 4xx scanning — generic scanner protection
+# ─────────────────────────────────────────
+[nginx-http-auth]
+enabled  = true
+filter   = nginx-http-auth
+port     = http,https
+logpath  = /var/log/nginx/*.error.log
+
+[nginx-botsearch]
+enabled  = true
+filter   = nginx-botsearch
+port     = http,https
+logpath  = /var/log/nginx/*.access.log
+maxretry = 2

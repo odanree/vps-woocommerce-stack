@@ -1,0 +1,123 @@
+---
+- name: Add Ondrej PHP PPA
+  apt_repository:
+    repo: "ppa:ondrej/php"
+    state: present
+    update_cache: true
+
+- name: Add Nginx mainline PPA
+  apt_repository:
+    repo: "ppa:ondrej/nginx-mainline"
+    state: present
+    update_cache: true
+
+- name: Install Nginx and PHP-FPM
+  apt:
+    name:
+      - nginx
+      - "php{{ php_version }}-fpm"
+      - "php{{ php_version }}-mysql"
+      - "php{{ php_version }}-redis"
+      - "php{{ php_version }}-gd"
+      - "php{{ php_version }}-mbstring"
+      - "php{{ php_version }}-xml"
+      - "php{{ php_version }}-curl"
+      - "php{{ php_version }}-zip"
+      - "php{{ php_version }}-intl"
+      - "php{{ php_version }}-bcmath"
+      - "php{{ php_version }}-imagick"
+    state: present
+
+- name: Configure PHP-FPM pool
+  template:
+    src: www.conf.j2
+    dest: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart php-fpm
+
+- name: Configure PHP session storage to Redis
+  lineinfile:
+    path: "/etc/php/{{ php_version }}/fpm/php.ini"
+    regexp: "^;?session.save_handler"
+    line: "session.save_handler = redis"
+
+- name: Configure PHP session save path
+  lineinfile:
+    path: "/etc/php/{{ php_version }}/fpm/php.ini"
+    regexp: "^;?session.save_path"
+    line: 'session.save_path = "tcp://127.0.0.1:6379"'
+  notify: Restart php-fpm
+
+- name: Set PHP upload/execution limits
+  lineinfile:
+    path: "/etc/php/{{ php_version }}/fpm/php.ini"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: "^upload_max_filesize", line: "upload_max_filesize = 64M" }
+    - { regexp: "^post_max_size", line: "post_max_size = 64M" }
+    - { regexp: "^memory_limit", line: "memory_limit = 256M" }
+    - { regexp: "^max_execution_time", line: "max_execution_time = 300" }
+  notify: Restart php-fpm
+
+- name: Create web root directory
+  file:
+    path: "/var/www/{{ server_domain }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Remove default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Install Nginx SSL params snippet
+  copy:
+    src: "{{ playbook_dir }}/../nginx/snippets/ssl-params.conf"
+    dest: /etc/nginx/snippets/ssl-params.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Install Nginx security headers snippet
+  copy:
+    src: "{{ playbook_dir }}/../nginx/snippets/security-headers.conf"
+    dest: /etc/nginx/snippets/security-headers.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Install structured access log format
+  copy:
+    src: "{{ playbook_dir }}/../monitoring/nginx-access-log.conf"
+    dest: /etc/nginx/conf.d/access-log-format.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Install WordPress site config
+  template:
+    src: wordpress.conf.j2
+    dest: "/etc/nginx/sites-available/{{ server_domain }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable WordPress site
+  file:
+    src: "/etc/nginx/sites-available/{{ server_domain }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ server_domain }}.conf"
+    state: link
+  notify: Reload nginx
+
+- name: Test Nginx config
+  command: nginx -t
+  changed_when: false

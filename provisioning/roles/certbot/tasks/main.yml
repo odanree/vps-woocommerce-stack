@@ -1,0 +1,55 @@
+---
+- name: Install Certbot and Nginx plugin
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: Obtain certificate (staging)
+  command: >
+    certbot --nginx
+    -d {{ server_domain }} -d www.{{ server_domain }}
+    --non-interactive
+    --agree-tos
+    --email {{ certbot_email }}
+    --staging
+  when: certbot_staging | bool
+  register: certbot_staging_result
+  changed_when: "'Congratulations' in certbot_staging_result.stdout"
+
+- name: Obtain certificate (production)
+  command: >
+    certbot --nginx
+    -d {{ server_domain }} -d www.{{ server_domain }}
+    --non-interactive
+    --agree-tos
+    --email {{ certbot_email }}
+  when: not certbot_staging | bool
+  register: certbot_prod_result
+  changed_when: "'Congratulations' in certbot_prod_result.stdout"
+
+- name: Install Certbot systemd timer for auto-renewal
+  copy:
+    content: |
+      [Unit]
+      Description=Certbot renewal
+
+      [Timer]
+      OnCalendar=*-*-* 03:00:00
+      RandomizedDelaySec=1h
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    dest: /etc/systemd/system/certbot.timer
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable Certbot renewal timer
+  systemd:
+    name: certbot.timer
+    state: started
+    enabled: true
+    daemon_reload: true
