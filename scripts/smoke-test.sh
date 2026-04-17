@@ -3,8 +3,7 @@
 # Usage: ./scripts/smoke-test.sh shop.example.com [server-ip]
 set -euo pipefail
 
-DOMAIN="${1:?Usage: smoke-test.sh <domain> [server-ip]}"
-SERVER_IP="${2:-}"
+DOMAIN="${1:?Usage: smoke-test.sh <domain>}"
 PASS=0
 FAIL=0
 
