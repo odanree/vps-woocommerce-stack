@@ -1,7 +1,7 @@
 # ADR 002 — Redis object cache over full-page cache
 
 **Status**: Accepted
-**Date**: 2024-02-01
+**Date**: 2026-04-16
 
 ## Context
 

@@ -1,7 +1,7 @@
 # ADR 003 — Certbot renewal via systemd timer over cron
 
 **Status**: Accepted
-**Date**: 2024-02-01
+**Date**: 2026-04-16
 
 ## Context
 
