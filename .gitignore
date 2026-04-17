@@ -7,3 +7,10 @@ provisioning/group_vars/all.yml
 *.crt
 secrets/
 .env
+
+# Terraform
+terraform/digitalocean/terraform.tfvars
+terraform/digitalocean/.terraform/
+terraform/digitalocean/.terraform.lock.hcl
+terraform/digitalocean/terraform.tfstate
+terraform/digitalocean/terraform.tfstate.backup

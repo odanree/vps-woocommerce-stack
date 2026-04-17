@@ -1,6 +1,6 @@
 # vps-woocommerce-stack
 
-Production-ready WooCommerce hosting environment on Hetzner Cloud. Provisions a hardened Ubuntu 24.04 server with Nginx, PHP-FPM, MySQL 8, Redis, Certbot, and Netdata — no Docker, no containers, direct server installation for maximum performance and operational simplicity.
+Production-ready WooCommerce hosting environment on **Hetzner Cloud** or **DigitalOcean**. Provisions a hardened Ubuntu 24.04 server with Nginx, PHP-FPM, MySQL 8, Redis, Certbot, and Netdata — no Docker, no containers, direct server installation for maximum performance and operational simplicity.
 
 Addresses the production eCommerce hosting lifecycle end-to-end: provisioning, security hardening, TLS automation, Redis object caching, performance tuning, real-time monitoring, and a documented scale-out path from single-node to load-balanced multi-tier.
 
@@ -15,16 +15,16 @@ Internet
 [Cloudflare CDN / DNS]
     │
     ▼
-Hetzner Cloud VPS (CX21 → CX41)
-├── Nginx 1.26  ←── reverse proxy + static files
+Hetzner CX21 / DO s-2vcpu-4gb (Ubuntu 24.04)
+├── DO Cloud Firewall  ←── edge-level packet filter (DO only, before OS)
+├── Nginx 1.26         ←── reverse proxy + static files
 │     └── PHP-FPM 8.3  ←── WordPress/WooCommerce
-├── MySQL 8.0   ←── primary datastore
-│     └── query cache tuning, InnoDB buffer pool
-├── Redis 7     ←── WooCommerce object cache (wp-object-cache drop-in)
-├── Certbot     ←── Let's Encrypt TLS, auto-renew via systemd timer
-├── fail2ban    ←── brute-force protection (SSH, WordPress xmlrpc/login)
-├── UFW         ←── stateful firewall (22/tcp, 80/tcp, 443/tcp only)
-└── Netdata     ←── real-time perf monitoring (Nginx, PHP-FPM, MySQL, Redis)
+├── MySQL 8.0          ←── primary datastore (InnoDB buffer pool tuning)
+├── Redis 7            ←── WooCommerce object cache (wp-object-cache drop-in)
+├── Certbot            ←── Let's Encrypt TLS, auto-renew via systemd timer
+├── fail2ban           ←── brute-force protection (SSH, WordPress login/xmlrpc)
+├── UFW                ←── stateful OS firewall (22/80/443 only)
+└── Netdata            ←── real-time perf monitoring (Nginx, PHP-FPM, MySQL, Redis)
 ```
 
 ---
@@ -46,25 +46,55 @@ Hetzner Cloud VPS (CX21 → CX41)
 
 ## Quick start
 
-### Prerequisites
-- Ansible 2.15+ on your local machine
-- A fresh Hetzner CX21 (2 vCPU, 4 GB RAM) running Ubuntu 24.04
-- Your SSH public key pre-loaded on the server
+### Option A — DigitalOcean (Terraform + Ansible)
+
+Terraform creates the Droplet and cloud firewall, writes the Ansible inventory, then Ansible provisions the stack. Two commands.
+
+**Prerequisites**: Terraform 1.6+, Ansible 2.15+, `doctl` authenticated, SSH key uploaded to DO.
 
 ```bash
-# Clone and configure
 git clone https://github.com/odanree/vps-woocommerce-stack.git
 cd vps-woocommerce-stack
 
-# Copy and edit inventory
+# 1. Create the Droplet
+cd terraform/digitalocean
+cp terraform.tfvars.example terraform.tfvars
+vim terraform.tfvars  # set do_token, ssh_public_key, domain, region
+
+terraform init
+terraform apply      # ≈ 60 seconds — creates Droplet + firewall, writes inventory/hosts
+
+# 2. Provision the stack
+cd ../../provisioning
+cp group_vars/all.example.yml group_vars/all.yml
+vim group_vars/all.yml  # set domain, DB passwords
+ansible-playbook -i inventory/hosts site.yml  # ≈ 8 minutes
+
+# 3. Verify
+../scripts/smoke-test.sh your-domain.com
+```
+
+**DO vs Hetzner differences:**
+- DO Ubuntu 24.04 Droplets default to `root`. The Terraform `user_data` cloud-init creates an `ubuntu` sudo user at boot — Ansible connects as `ubuntu`.
+- DO applies a **cloud-level firewall** at the network edge before the OS firewall. The Terraform config creates this with only ports 22/80/443 open. UFW on the OS provides a second layer.
+- Netdata (19999) is blocked at both layers. Tunnel via SSH: `ssh -L 19999:localhost:19999 ubuntu@your-droplet-ip`
+
+---
+
+### Option B — Hetzner (manual server + Ansible)
+
+**Prerequisites**: Ansible 2.15+, a fresh Hetzner CX21 running Ubuntu 24.04 with your SSH key.
+
+```bash
+git clone https://github.com/odanree/vps-woocommerce-stack.git
+cd vps-woocommerce-stack
+
 cp provisioning/inventory/hosts.example provisioning/inventory/hosts
 vim provisioning/inventory/hosts  # set your server IP
 
-# Copy and edit group vars
 cp provisioning/group_vars/all.example.yml provisioning/group_vars/all.yml
-vim provisioning/group_vars/all.yml  # set domain, DB password, etc.
+vim provisioning/group_vars/all.yml
 
-# Run full provisioning (≈ 8 minutes on a fresh box)
 cd provisioning
 ansible-playbook -i inventory/hosts site.yml
 ```
@@ -78,12 +108,13 @@ ansible-playbook -i inventory/hosts site.yml
 
 ## Server spec and sizing
 
-| Resource | Minimum (CX21) | Recommended (CX41) | Notes |
-|----------|---------------|-------------------|-------|
-| vCPU | 2 | 4 | PHP-FPM workers = CPU × 2 |
-| RAM | 4 GB | 8 GB | InnoDB buffer: 70% of RAM |
-| Disk | 40 GB SSD | 80 GB SSD | MySQL data + logs |
-| Redis RAM | 256 MB | 512 MB | `maxmemory` in redis.conf |
+| Tier | Hetzner | DigitalOcean | vCPU | RAM | Use case |
+|------|---------|-------------|------|-----|---------|
+| Minimum | CX21 | s-2vcpu-4gb | 2 | 4 GB | < 5k orders/mo |
+| Recommended | CX31 | s-4vcpu-8gb | 4 | 8 GB | < 20k orders/mo |
+| High-traffic | CX41 | s-8vcpu-16gb | 8 | 16 GB | Peak sales events |
+
+InnoDB buffer pool (`innodb_buffer_pool_size` in `mysql/my.cnf`) is set to ~70% of available RAM after Nginx/PHP/Redis overhead. Adjust for your chosen tier — the `my.cnf` comment explains the formula.
 
 ---
 

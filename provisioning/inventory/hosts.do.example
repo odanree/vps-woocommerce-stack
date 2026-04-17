@@ -1,0 +1,10 @@
+# DigitalOcean inventory example
+# Terraform writes this file automatically from outputs.
+# If running Ansible manually, set your Droplet's public IP here.
+
+[webservers]
+# Replace with your Droplet's public IP (from: doctl compute droplet list)
+your-droplet-ip ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[webservers:vars]
+ansible_python_interpreter=/usr/bin/python3

@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit tokens.
+
+do_token       = "dop_v1_your_token_here"
+ssh_key_name   = "deployer"
+ssh_public_key = "ssh-ed25519 AAAAC3... your-key-comment"
+region         = "nyc3"
+droplet_size   = "s-2vcpu-4gb"
+domain         = "shop.example.com"
+environment    = "prod"
+manage_dns     = false
+
+# Your IP only — SSH tunnel to Netdata from here
+netdata_allowed_ips = ["203.0.113.10/32"]
