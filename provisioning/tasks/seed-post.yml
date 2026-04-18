@@ -1,7 +1,6 @@
 ---
 # Called by seed-content.yml once per post via include_tasks + loop.
-# Variables available: post (dict with title, slug, category, excerpt, content,
-#                      image_url, image_alt), wp (WP-CLI command prefix)
+# Variables: post (dict), wp (WP-CLI command prefix)
 
 - name: "{{ post.title }} — get category ID"
   command: >
@@ -17,9 +16,18 @@
   register: existing_post
   changed_when: false
 
-- name: "{{ post.title }} — import featured image"
+- name: "{{ post.title }} — download image to /tmp"
+  shell: >
+    curl -sL "{{ post.image_url }}"
+    -o /tmp/{{ post.slug }}.jpg
+    --max-time 60
+  args:
+    creates: "/tmp/{{ post.slug }}.jpg"
+  when: existing_post.stdout | trim == ""
+
+- name: "{{ post.title }} — import featured image from disk"
   command: >
-    {{ wp }} media import "{{ post.image_url }}"
+    {{ wp }} media import /tmp/{{ post.slug }}.jpg
     --title="{{ post.title }}"
     --alt="{{ post.image_alt }}"
     --porcelain
@@ -47,3 +55,9 @@
     - existing_post.stdout | trim == ""
     - post_id.stdout is defined
     - attachment_id.stdout is defined
+
+- name: "{{ post.title }} — clean up temp file"
+  file:
+    path: "/tmp/{{ post.slug }}.jpg"
+    state: absent
+  when: existing_post.stdout | trim == ""
