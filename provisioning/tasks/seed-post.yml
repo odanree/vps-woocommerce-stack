@@ -20,9 +20,7 @@
   shell: >
     curl -sL "{{ post.image_url }}"
     -o /tmp/{{ post.slug }}.jpg
-    --max-time 60
-  args:
-    creates: "/tmp/{{ post.slug }}.jpg"
+    --max-time 120
   when: existing_post.stdout | trim == ""
 
 - name: "{{ post.title }} — import featured image from disk"
