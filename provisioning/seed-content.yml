@@ -1,9 +1,6 @@
 ---
 # Seed demo posts with large unoptimized images for testing ODR Image Optimizer.
 # Run: ansible-playbook -i inventory/hosts seed-content.yml
-#
-# Photos sourced from Unsplash (free to use, no attribution required commercially).
-# Images are fetched at full resolution (~2400px wide) to produce 500kb+ files.
 
 - name: Seed demo content
   hosts: webservers
@@ -17,62 +14,52 @@
       - title: "Golden Hour Over the Canadian Rockies"
         slug: golden-hour-canadian-rockies
         category: Landscape
-        excerpt: >
+        excerpt: >-
           As the sun dips below the treeline in Banff National Park, the peaks
           of the Canadian Rockies ignite in amber and rose. Peyto Lake glows a
-          surreal glacier-blue — a colour produced by rock flour suspended in
-          meltwater, scattering shorter wavelengths of light. No filter needed.
-        content: >
+          surreal glacier-blue produced by rock flour suspended in meltwater.
+          No filter needed.
+        content: >-
           Banff National Park sits 1,400 metres above sea level in the heart of
           the Alberta Rockies. Established in 1885, it is Canada's oldest
-          national park and a UNESCO World Heritage Site. The Icefields Parkway
-          — the 232-kilometre highway linking Banff to Jasper — is consistently
-          ranked among the most scenic drives on Earth.
+          national park and a UNESCO World Heritage Site.
 
-          Peyto Lake, the centrepiece of this photograph, owes its vivid
-          turquoise colour to glacial silt carried by meltwater from Peyto
-          Glacier above. The fine particles remain suspended in the water
-          column, absorbing red and yellow wavelengths and reflecting blue-green
-          light back to the surface.
+          Peyto Lake owes its vivid turquoise colour to glacial silt carried by
+          meltwater from Peyto Glacier above. The fine particles remain
+          suspended in the water column, absorbing red and yellow wavelengths
+          and reflecting blue-green light back to the surface.
 
           Golden hour in the Rockies lasts approximately 45 minutes. The low
           angle of the sun casts long shadows across the valley floor while
-          bathing the upper peaks in warm directional light — a window that
-          landscape photographers plan months of travel around.
+          bathing the upper peaks in warm directional light.
         image_url: >-
           https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=3200&q=90&fm=jpg
-        image_alt: "Aerial view of Peyto Lake and surrounding peaks at golden hour, Banff, Canada"
+        image_alt: >-
+          Aerial view of Peyto Lake and surrounding peaks at golden hour, Banff
 
       - title: "Chicago After Midnight — The Lakefront at Blue Hour"
         slug: chicago-after-midnight-lakefront
         category: Cityscape
-        excerpt: >
-          Blue hour in Chicago lasts about twenty minutes. In that window, the
+        excerpt: >-
+          Blue hour in Chicago lasts about twenty minutes. In that window the
           city's glass towers catch the last of the indigo sky and the first
           of the street lights — a brief equilibrium between natural and
-          artificial light that turns the lakefront into something cinematic.
-        content: >
+          artificial light that turns the lakefront cinematic.
+        content: >-
           Chicago's skyline is one of the most architecturally significant in
           the world. After the Great Fire of 1871 levelled much of the city,
-          Chicago rebuilt with ambition — pioneering the steel-frame skyscraper
-          and establishing the architectural vocabulary of the modern city.
+          Chicago rebuilt with ambition, pioneering the steel-frame skyscraper
+          and establishing the vocabulary of the modern city.
 
-          The Willis Tower (formerly Sears Tower), completed in 1973, held the
-          title of the world's tallest building for 25 years. The John Hancock
-          Center's distinctive X-bracing, designed by engineer Fazlur Rahman
-          Khan, solved the problem of lateral wind load with an elegance that
-          became a design signature in its own right.
-
-          Lake Michigan provides the city's eastern edge — a 58,000 square
-          kilometre inland sea that keeps Chicago's summers mild and its winters
-          brutal. The lakefront trail runs 26 miles along the shoreline,
-          connecting 24 beaches and offering unobstructed views of the skyline
-          from the south.
+          The Willis Tower, completed in 1973, held the title of the world's
+          tallest building for 25 years. Lake Michigan provides the city's
+          eastern edge — a 58,000 square kilometre inland sea that keeps
+          Chicago's summers mild and its winters brutal.
 
           Blue hour photography in Chicago rewards patience. The 20-minute
-          window between civil and nautical twilight produces the even,
-          diffused light that brings out the full depth of the skyline without
-          blowing out the artificial lights or losing detail in the shadows.
+          window between civil and nautical twilight produces even, diffused
+          light that brings out the full depth of the skyline without blowing
+          out artificial lights or losing shadow detail.
         image_url: >-
           https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=3200&q=90&fm=jpg
         image_alt: "Chicago city skyline reflected on Lake Michigan at blue hour"
@@ -80,113 +67,51 @@
       - title: "Old Growth — Inside the Hoh Rainforest"
         slug: old-growth-hoh-rainforest
         category: Nature
-        excerpt: >
+        excerpt: >-
           The Hoh Rainforest on Washington's Olympic Peninsula receives up to
           four metres of rainfall per year, producing some of the densest
           temperate rainforest on the planet. Trees here are measured not in
-          years but in centuries — Sitka spruce and western red cedar that were
-          saplings when Magna Carta was signed.
-        content: >
+          years but in centuries.
+        content: >-
           Olympic National Park's Hoh Rain Forest sits on the western slope of
           the Olympic Peninsula, fed by moisture-laden air rolling off the
           Pacific. The forest receives between 140 and 170 inches of
-          precipitation annually, making it one of only a handful of temperate
-          rainforests on Earth.
+          precipitation annually.
 
-          The canopy is dominated by Sitka spruce, western hemlock, and big-leaf
-          maple. The forest floor is carpeted in up to 130 species of moss,
-          which drape every horizontal surface — fallen logs, branches, and
-          boulders — in unbroken green. Nurse logs, fallen giants slowly
-          decomposing over decades, provide the nutrients and structure for new
-          growth; rows of young trees often betray the presence of a nurse log
-          that has long since vanished beneath the soil.
+          The canopy is dominated by Sitka spruce, western hemlock, and
+          big-leaf maple. The forest floor is carpeted in up to 130 species of
+          moss, which drape every horizontal surface in unbroken green. Nurse
+          logs provide nutrients and structure for new growth across decades.
 
-          Roosevelt elk move through the valley in herds of 30 or more, and the
-          forest's acoustic properties — sound absorbed by moss and deflected by
-          dense canopy — produce a hush that is almost architectural. The Hoh is
-          among the quietest places in the continental United States; the One
-          Square Inch of Silence project has identified a single point in the
-          forest as one of the most acoustically pristine locations in the
-          country.
-
-          Western red cedar individuals in the Hoh have been dated to over 1,000
-          years old. The largest known Sitka spruce in the world — 191 feet
-          tall, 58 feet in circumference — stands in the Quinault Rain Forest
-          nearby.
+          Roosevelt elk move through the valley in herds of 30 or more. The
+          Hoh is among the quietest places in the continental United States.
+          Western red cedar individuals here have been dated to over 1,000
+          years old.
         image_url: >-
           https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=3200&q=90&fm=jpg
-        image_alt: "Moss-covered trees and ferns in the Hoh Rainforest, Olympic National Park"
+        image_alt: >-
+          Moss-covered trees and ferns in the Hoh Rainforest, Olympic National Park
 
   tasks:
-    # ── Categories ──────────────────────────────────────────────────────────────
-
     - name: Create post categories
       command: >
         {{ wp }} term create category {{ item }}
         --slug={{ item | lower }}
         --porcelain
-      register: cat_create
       loop:
         - Landscape
         - Cityscape
         - Nature
+      register: cat_create
       changed_when: cat_create.rc == 0
-      failed_when: false  # already-exists returns rc=1, that's fine
+      failed_when: false
 
-    # ── Posts and featured images ────────────────────────────────────────────────
-
-    - name: Create post — {{ item.title }}
-      vars:
-        post: "{{ item }}"
-      block:
-        - name: Get or create category ID for {{ post.category }}
-          command: >
-            {{ wp }} term get category {{ post.category | lower }}
-            --by=slug --field=term_id
-          register: cat_id
-          changed_when: false
-
-        - name: Check if post already exists — {{ post.title }}
-          command: >
-            {{ wp }} post list --post_type=post
-            --name={{ post.slug }} --field=ID --format=csv
-          register: existing_post
-          changed_when: false
-
-        - name: Import featured image — {{ post.title }}
-          command: >
-            {{ wp }} media import "{{ post.image_url }}"
-            --title="{{ post.title }}"
-            --alt="{{ post.image_alt }}"
-            --porcelain
-          register: attachment_id
-          when: existing_post.stdout | trim == ""
-
-        - name: Create post — {{ post.title }}
-          command: >
-            {{ wp }} post create
-            --post_title="{{ post.title }}"
-            --post_name="{{ post.slug }}"
-            --post_excerpt="{{ post.excerpt }}"
-            --post_content="{{ post.content }}"
-            --post_status=publish
-            --post_category={{ cat_id.stdout | trim }}
-            --porcelain
-          register: post_id
-          when: existing_post.stdout | trim == ""
-
-        - name: Set featured image — {{ post.title }}
-          command: >
-            {{ wp }} post meta update {{ post_id.stdout | trim }}
-            _thumbnail_id {{ attachment_id.stdout | trim }}
-          when:
-            - existing_post.stdout | trim == ""
-            - post_id.stdout is defined
-            - attachment_id.stdout is defined
-
+    - name: Create post with featured image
+      include_tasks: tasks/seed-post.yml
       loop: "{{ posts }}"
       loop_control:
-        label: "{{ item.title }}"
+        loop_var: post
+        label: "{{ post.title }}"
 
     - name: Set homepage to show latest posts
       command: "{{ wp }} option update show_on_front posts"

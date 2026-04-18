@@ -1,0 +1,49 @@
+---
+# Called by seed-content.yml once per post via include_tasks + loop.
+# Variables available: post (dict with title, slug, category, excerpt, content,
+#                      image_url, image_alt), wp (WP-CLI command prefix)
+
+- name: "{{ post.title }} — get category ID"
+  command: >
+    {{ wp }} term get category {{ post.category | lower }}
+    --by=slug --field=term_id
+  register: cat_id
+  changed_when: false
+
+- name: "{{ post.title }} — check if post exists"
+  command: >
+    {{ wp }} post list --post_type=post
+    --name={{ post.slug }} --field=ID --format=csv
+  register: existing_post
+  changed_when: false
+
+- name: "{{ post.title }} — import featured image"
+  command: >
+    {{ wp }} media import "{{ post.image_url }}"
+    --title="{{ post.title }}"
+    --alt="{{ post.image_alt }}"
+    --porcelain
+  register: attachment_id
+  when: existing_post.stdout | trim == ""
+
+- name: "{{ post.title }} — create post"
+  command: >
+    {{ wp }} post create
+    --post_title="{{ post.title }}"
+    --post_name="{{ post.slug }}"
+    --post_excerpt="{{ post.excerpt }}"
+    --post_content="{{ post.content }}"
+    --post_status=publish
+    --post_category={{ cat_id.stdout | trim }}
+    --porcelain
+  register: post_id
+  when: existing_post.stdout | trim == ""
+
+- name: "{{ post.title }} — set featured image"
+  command: >
+    {{ wp }} post meta update {{ post_id.stdout | trim }}
+    _thumbnail_id {{ attachment_id.stdout | trim }}
+  when:
+    - existing_post.stdout | trim == ""
+    - post_id.stdout is defined
+    - attachment_id.stdout is defined
