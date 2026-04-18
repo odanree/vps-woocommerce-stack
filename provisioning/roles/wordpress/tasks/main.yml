@@ -150,7 +150,7 @@
   git:
     repo: "https://github.com/odanree/woocommerce-payment-gateway.git"
     dest: "/var/www/{{ server_domain }}/wp-content/plugins/woocommerce-payment-gateway"
-    version: main
+    version: master
     depth: 1
   when: not gateway_plugin.stat.exists
   become: true
