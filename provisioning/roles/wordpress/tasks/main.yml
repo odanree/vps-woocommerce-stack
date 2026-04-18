@@ -140,19 +140,14 @@
   become_user: www-data
 
 # ── Custom payment gateway plugin ─────────────────────────────────────────────
+# update: true pulls latest on every run — keeps plugin code in sync with main branch
 
-- name: Check if payment gateway plugin is installed
-  stat:
-    path: "/var/www/{{ server_domain }}/wp-content/plugins/woocommerce-payment-gateway/woocommerce-payment-gateway.php"
-  register: gateway_plugin
-
-- name: Clone payment gateway plugin from GitHub
+- name: Clone or update payment gateway plugin from GitHub
   git:
     repo: "https://github.com/odanree/woocommerce-payment-gateway.git"
     dest: "/var/www/{{ server_domain }}/wp-content/plugins/woocommerce-payment-gateway"
     version: master
-    depth: 1
-  when: not gateway_plugin.stat.exists
+    update: true
   become: true
   become_user: www-data
 
@@ -169,18 +164,12 @@
 
 # ── ODR Image Optimizer plugin ────────────────────────────────────────────────
 
-- name: Check if ODR Image Optimizer is installed
-  stat:
-    path: "/var/www/{{ server_domain }}/wp-content/plugins/odr-image-optimizer/odr-image-optimizer.php"
-  register: odr_plugin
-
-- name: Clone ODR Image Optimizer from GitHub
+- name: Clone or update ODR Image Optimizer from GitHub
   git:
     repo: "https://github.com/odanree/odr-image-optimizer.git"
     dest: "/var/www/{{ server_domain }}/wp-content/plugins/odr-image-optimizer"
     version: main
-    depth: 1
-  when: not odr_plugin.stat.exists
+    update: true
   become: true
   become_user: www-data
 
