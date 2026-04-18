@@ -40,15 +40,15 @@ apt-get install -y -qq \
     nginx \
     mysql-server \
     certbot python3-certbot-nginx \
-    php${PHP_VER}-fpm \
-    php${PHP_VER}-mysql \
-    php${PHP_VER}-curl \
-    php${PHP_VER}-gd \
-    php${PHP_VER}-mbstring \
-    php${PHP_VER}-xml \
-    php${PHP_VER}-zip \
-    php${PHP_VER}-intl \
-    php${PHP_VER}-bcmath
+    "php${PHP_VER}-fpm" \
+    "php${PHP_VER}-mysql" \
+    "php${PHP_VER}-curl" \
+    "php${PHP_VER}-gd" \
+    "php${PHP_VER}-mbstring" \
+    "php${PHP_VER}-xml" \
+    "php${PHP_VER}-zip" \
+    "php${PHP_VER}-intl" \
+    "php${PHP_VER}-bcmath"
 
 # ── 2. WP-CLI ─────────────────────────────────────────────────────────────────
 echo "==> [2/8] Installing WP-CLI..."
