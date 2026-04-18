@@ -184,6 +184,19 @@ Nginx access logs use a structured JSON format for easy ingestion into Loki/Graf
 | Secret scan (gitleaks) | push / PR |
 | Ansible syntax check | push / PR |
 
+The same checks run as a pre-commit hook on staged files. Activate once after cloning:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+If a tool isn't installed the hook warns but doesn't block. To install the full toolchain:
+
+```bash
+sudo apt install shellcheck      # or brew install shellcheck
+pip install yamllint ansible-lint
+```
+
 ---
 
 ## Related docs
