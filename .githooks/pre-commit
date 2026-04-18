@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Pre-commit hook — mirrors CI lint checks so failures are caught locally.
+# Install once: git config core.hooksPath .githooks
+
+set -uo pipefail
+
+PASS=true
+
+# ── Staged files ──────────────────────────────────────────────────────────────
+STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM | grep '\.sh$' || true)
+STAGED_YML=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yml|yaml)$' || true)
+
+# ── shellcheck ────────────────────────────────────────────────────────────────
+if [[ -n "$STAGED_SH" ]]; then
+  if command -v shellcheck &>/dev/null; then
+    echo "=> shellcheck"
+    # shellcheck disable=SC2086
+    if ! shellcheck $STAGED_SH; then
+      PASS=false
+    fi
+  else
+    echo "WARN: shellcheck not installed — skipping (apt install shellcheck)"
+  fi
+fi
+
+# ── yamllint ──────────────────────────────────────────────────────────────────
+if [[ -n "$STAGED_YML" ]]; then
+  if command -v yamllint &>/dev/null; then
+    echo "=> yamllint"
+    # shellcheck disable=SC2086
+    if ! yamllint -d relaxed $STAGED_YML; then
+      PASS=false
+    fi
+  else
+    echo "WARN: yamllint not installed — skipping (pip install yamllint)"
+  fi
+fi
+
+# ── ansible-lint (only if provisioning YAML changed) ─────────────────────────
+STAGED_ANSIBLE=$(git diff --cached --name-only --diff-filter=ACM | grep '^provisioning/' || true)
+if [[ -n "$STAGED_ANSIBLE" ]]; then
+  if command -v ansible-lint &>/dev/null; then
+    echo "=> ansible-lint"
+    if ! ansible-lint provisioning/site.yml --nocolor -q; then
+      PASS=false
+    fi
+  else
+    echo "WARN: ansible-lint not installed — skipping (pip install ansible-lint)"
+  fi
+fi
+
+# ── Result ────────────────────────────────────────────────────────────────────
+if [[ "$PASS" != "true" ]]; then
+  echo ""
+  echo "Pre-commit checks failed. Fix the issues above before committing."
+  exit 1
+fi
