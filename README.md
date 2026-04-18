@@ -1,6 +1,6 @@
 # vps-woocommerce-stack
 
-Production-ready WooCommerce hosting environment on **Hetzner Cloud** or **DigitalOcean**. Provisions a hardened Ubuntu 24.04 server with Nginx, PHP-FPM, MySQL 8, Redis, Certbot, and Netdata — no Docker, no containers, direct server installation for maximum performance and operational simplicity.
+Production-ready WooCommerce hosting environment on **DigitalOcean**. Provisions a hardened Ubuntu 24.04 Droplet with Nginx, PHP-FPM, MySQL 8, Redis, Certbot, and Netdata — no Docker, no containers, direct server installation for maximum performance and operational simplicity.
 
 Addresses the production eCommerce hosting lifecycle end-to-end: provisioning, security hardening, TLS automation, Redis object caching, performance tuning, real-time monitoring, and a documented scale-out path from single-node to load-balanced multi-tier.
 
@@ -15,8 +15,8 @@ Internet
 [Cloudflare CDN / DNS]
     │
     ▼
-Hetzner CX21 / DO s-2vcpu-4gb (Ubuntu 24.04)
-├── DO Cloud Firewall  ←── edge-level packet filter (DO only, before OS)
+DO s-2vcpu-4gb (Ubuntu 24.04)
+├── DO Cloud Firewall  ←── edge-level packet filter (before OS)
 ├── Nginx 1.26         ←── reverse proxy + static files
 │     └── PHP-FPM 8.3  ←── WordPress/WooCommerce
 ├── MySQL 8.0          ←── primary datastore (InnoDB buffer pool tuning)
@@ -46,11 +46,9 @@ Hetzner CX21 / DO s-2vcpu-4gb (Ubuntu 24.04)
 
 ## Quick start
 
-### Option A — DigitalOcean (Terraform + Ansible)
+Terraform creates the Droplet and cloud firewall, writes the Ansible inventory, then Ansible provisions the stack.
 
-Terraform creates the Droplet and cloud firewall, writes the Ansible inventory, then Ansible provisions the stack. Two commands.
-
-**Prerequisites**: Terraform 1.6+, Ansible 2.15+, `doctl` authenticated, SSH key uploaded to DO.
+**Prerequisites**: Terraform 1.6+, Ansible 2.15+, SSH key uploaded to DigitalOcean.
 
 ```bash
 git clone https://github.com/odanree/vps-woocommerce-stack.git
@@ -67,37 +65,17 @@ terraform apply      # ≈ 60 seconds — creates Droplet + firewall, writes inv
 # 2. Provision the stack
 cd ../../provisioning
 cp group_vars/all.example.yml group_vars/all.yml
-vim group_vars/all.yml  # set domain, DB passwords
+vim group_vars/all.yml  # set domain, DB passwords, WordPress admin credentials
 ansible-playbook -i inventory/hosts site.yml  # ≈ 8 minutes
 
 # 3. Verify
 ../scripts/smoke-test.sh your-domain.com
 ```
 
-**DO vs Hetzner differences:**
-- DO Ubuntu 24.04 Droplets default to `root`. The Terraform `user_data` cloud-init creates an `ubuntu` sudo user at boot — Ansible connects as `ubuntu`.
-- DO applies a **cloud-level firewall** at the network edge before the OS firewall. The Terraform config creates this with only ports 22/80/443 open. UFW on the OS provides a second layer.
+**Notes:**
+- Ubuntu 24.04 Droplets default to `root`. The Terraform `user_data` cloud-init creates an `ubuntu` sudo user at boot — Ansible connects as `ubuntu`.
+- A **cloud-level firewall** is applied at the network edge before the OS. The Terraform config opens only ports 22/80/443. UFW on the OS provides a second layer.
 - Netdata (19999) is blocked at both layers. Tunnel via SSH: `ssh -L 19999:localhost:19999 ubuntu@your-droplet-ip`
-
----
-
-### Option B — Hetzner (manual server + Ansible)
-
-**Prerequisites**: Ansible 2.15+, a fresh Hetzner CX21 running Ubuntu 24.04 with your SSH key.
-
-```bash
-git clone https://github.com/odanree/vps-woocommerce-stack.git
-cd vps-woocommerce-stack
-
-cp provisioning/inventory/hosts.example provisioning/inventory/hosts
-vim provisioning/inventory/hosts  # set your server IP
-
-cp provisioning/group_vars/all.example.yml provisioning/group_vars/all.yml
-vim provisioning/group_vars/all.yml
-
-cd provisioning
-ansible-playbook -i inventory/hosts site.yml
-```
 
 ### Smoke test after provisioning
 ```bash
@@ -108,11 +86,11 @@ ansible-playbook -i inventory/hosts site.yml
 
 ## Server spec and sizing
 
-| Tier | Hetzner | DigitalOcean | vCPU | RAM | Use case |
-|------|---------|-------------|------|-----|---------|
-| Minimum | CX21 | s-2vcpu-4gb | 2 | 4 GB | < 5k orders/mo |
-| Recommended | CX31 | s-4vcpu-8gb | 4 | 8 GB | < 20k orders/mo |
-| High-traffic | CX41 | s-8vcpu-16gb | 8 | 16 GB | Peak sales events |
+| Tier | Droplet size | vCPU | RAM | Use case |
+|------|-------------|------|-----|---------|
+| Minimum | s-2vcpu-4gb | 2 | 4 GB | < 5k orders/mo |
+| Recommended | s-4vcpu-8gb | 4 | 8 GB | < 20k orders/mo |
+| High-traffic | s-8vcpu-16gb | 8 | 16 GB | Peak sales events |
 
 InnoDB buffer pool (`innodb_buffer_pool_size` in `mysql/my.cnf`) is set to ~70% of available RAM after Nginx/PHP/Redis overhead. Adjust for your chosen tier — the `my.cnf` comment explains the formula.
 
@@ -137,7 +115,7 @@ See [`docs/security-hardening.md`](docs/security-hardening.md) for the full cont
 WooCommerce makes 50–200 MySQL queries per page load. Redis object caching collapses repeated identical queries into sub-millisecond cache hits.
 
 ```
-# Measured on a 2 vCPU CX21 with 500 products, 20 active coupons
+# Measured on a 2 vCPU Droplet with 500 products, 20 active coupons
 Before Redis: 340ms avg TTFB (shop page, warm MySQL)
 After Redis:   42ms avg TTFB (cache hit ratio > 90% after warm-up)
 ```
@@ -157,19 +135,18 @@ Stage 1 — Single node (this repo)
   └─ 1 VPS handles web, DB, cache, cron
 
 Stage 2 — Dedicated DB
-  └─ Separate MySQL node (Hetzner CX21)
-  └─ App VPS connects via private network
+  └─ Separate MySQL Droplet on DO private network
   └─ No app code changes; change DATABASE_HOST in wp-config.php
 
 Stage 3 — Load-balanced web tier
-  ├─ 2+ Nginx/PHP-FPM nodes (stateless)
+  ├─ 2+ Nginx/PHP-FPM Droplets (stateless)
   ├─ Shared Redis over private network (sessions + object cache)
-  ├─ MySQL on dedicated node (or Hetzner Managed Databases)
-  ├─ Hetzner Load Balancer in front (TCP/HTTPS)
-  └─ Shared NFS or object storage for wp-content/uploads
+  ├─ MySQL on dedicated Droplet (or DO Managed Databases)
+  ├─ DO Load Balancer in front (TCP/HTTPS)
+  └─ Shared Spaces (S3-compatible) for wp-content/uploads
 
 Stage 4 — Peak traffic
-  └─ Autoscale app tier via Hetzner Terraform provider
+  └─ Autoscale app tier via DO Terraform provider
   └─ Read replicas for MySQL
   └─ Cloudflare cache rules for WooCommerce static assets
 ```
@@ -192,7 +169,7 @@ Dashboards preconfigured for:
 - **PHP-FPM**: active processes, queue length, slow requests
 - **MySQL**: queries/s, InnoDB buffer pool hit ratio, slow query rate
 - **Redis**: hit rate, memory usage, evictions/s
-- **System**: CPU steal (Hetzner VPS headroom indicator), disk I/O wait
+- **System**: CPU steal (Droplet headroom indicator), disk I/O wait
 
 Nginx access logs use a structured JSON format for easy ingestion into Loki/Grafana if you later add a monitoring stack. See [`monitoring/nginx-access-log.conf`](monitoring/nginx-access-log.conf).
 
