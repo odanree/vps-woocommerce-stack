@@ -139,6 +139,62 @@
   become: true
   become_user: www-data
 
+# ── Custom payment gateway plugin ─────────────────────────────────────────────
+
+- name: Check if payment gateway plugin is installed
+  stat:
+    path: "/var/www/{{ server_domain }}/wp-content/plugins/woocommerce-payment-gateway/woocommerce-payment-gateway.php"
+  register: gateway_plugin
+
+- name: Clone payment gateway plugin from GitHub
+  git:
+    repo: "https://github.com/odanree/woocommerce-payment-gateway.git"
+    dest: "/var/www/{{ server_domain }}/wp-content/plugins/woocommerce-payment-gateway"
+    version: main
+    depth: 1
+  when: not gateway_plugin.stat.exists
+  become: true
+  become_user: www-data
+
+- name: Activate payment gateway plugin
+  command: >
+    wp plugin activate woocommerce-payment-gateway
+    --path=/var/www/{{ server_domain }}
+    --allow-root
+  register: gateway_activate
+  changed_when: "'activated' in gateway_activate.stdout"
+  failed_when: false
+  become: true
+  become_user: www-data
+
+# ── ODR Image Optimizer plugin ────────────────────────────────────────────────
+
+- name: Check if ODR Image Optimizer is installed
+  stat:
+    path: "/var/www/{{ server_domain }}/wp-content/plugins/odr-image-optimizer/odr-image-optimizer.php"
+  register: odr_plugin
+
+- name: Clone ODR Image Optimizer from GitHub
+  git:
+    repo: "https://github.com/odanree/odr-image-optimizer.git"
+    dest: "/var/www/{{ server_domain }}/wp-content/plugins/odr-image-optimizer"
+    version: main
+    depth: 1
+  when: not odr_plugin.stat.exists
+  become: true
+  become_user: www-data
+
+- name: Activate ODR Image Optimizer
+  command: >
+    wp plugin activate odr-image-optimizer
+    --path=/var/www/{{ server_domain }}
+    --allow-root
+  register: odr_activate
+  changed_when: "'activated' in odr_activate.stdout"
+  failed_when: false
+  become: true
+  become_user: www-data
+
 # ── File permissions ───────────────────────────────────────────────────────────
 
 - name: Set correct file permissions
