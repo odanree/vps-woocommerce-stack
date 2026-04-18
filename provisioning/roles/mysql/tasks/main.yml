@@ -22,6 +22,20 @@
     mode: "0644"
   notify: Restart mysql
 
+# Write .my.cnf BEFORE setting the password so re-runs can authenticate.
+# First run: auth_socket is in effect, MySQL ignores the password in .my.cnf.
+# Subsequent runs: root uses caching_sha2_password, module reads .my.cnf.
+- name: Write /root/.my.cnf for passwordless root CLI access
+  copy:
+    content: |
+      [client]
+      user=root
+      password={{ mysql_root_password }}
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: "0600"
+
 - name: Set MySQL root password
   mysql_user:
     name: root

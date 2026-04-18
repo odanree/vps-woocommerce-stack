@@ -5,12 +5,6 @@
     state: present
     update_cache: true
 
-- name: Add Nginx mainline PPA
-  apt_repository:
-    repo: "ppa:ondrej/nginx-mainline"
-    state: present
-    update_cache: true
-
 - name: Install Nginx and PHP-FPM
   apt:
     name:
@@ -101,6 +95,41 @@
     group: root
     mode: "0644"
   notify: Reload nginx
+
+# ── Placeholder cert (chicken-and-egg fix) ────────────────────────────────────
+# Nginx -t fails if the LE cert path in wordpress.conf.j2 doesn't exist yet.
+# We drop a self-signed cert so Nginx can start; Certbot replaces it later.
+
+- name: Check if Let's Encrypt cert already exists
+  stat:
+    path: "/etc/letsencrypt/live/{{ server_domain }}/fullchain.pem"
+  register: le_cert
+
+- name: Create LE live directory for placeholder cert
+  file:
+    path: "/etc/letsencrypt/live/{{ server_domain }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  when: not le_cert.stat.exists
+
+- name: Generate self-signed placeholder cert
+  command: >
+    openssl req -x509 -nodes -newkey rsa:2048
+    -keyout /etc/letsencrypt/live/{{ server_domain }}/privkey.pem
+    -out /etc/letsencrypt/live/{{ server_domain }}/fullchain.pem
+    -days 1 -subj "/CN={{ server_domain }}"
+  args:
+    creates: "/etc/letsencrypt/live/{{ server_domain }}/fullchain.pem"
+  when: not le_cert.stat.exists
+
+- name: Generate DH parameters (2048-bit)
+  command: openssl dhparam -out /etc/ssl/dhparam.pem 2048
+  args:
+    creates: /etc/ssl/dhparam.pem
+
+# ── Nginx site config ─────────────────────────────────────────────────────────
 
 - name: Install WordPress site config
   template:

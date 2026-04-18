@@ -6,10 +6,24 @@
       - python3-certbot-nginx
     state: present
 
+# If the nginx role created a self-signed placeholder, Certbot sees the live
+# directory but has no renewal config and fails with "live directory exists".
+# Detect this case and remove the orphaned dir so Certbot can start fresh.
+- name: Check for real LE renewal config
+  stat:
+    path: "/etc/letsencrypt/renewal/{{ server_domain }}.conf"
+  register: le_renewal
+
+- name: Remove self-signed placeholder cert (not a real LE cert)
+  file:
+    path: "/etc/letsencrypt/live/{{ server_domain }}"
+    state: absent
+  when: not le_renewal.stat.exists
+
 - name: Obtain certificate (staging)
   command: >
     certbot --nginx
-    -d {{ server_domain }} -d www.{{ server_domain }}
+    -d {{ server_domain }}
     --non-interactive
     --agree-tos
     --email {{ certbot_email }}
@@ -21,9 +35,10 @@
 - name: Obtain certificate (production)
   command: >
     certbot --nginx
-    -d {{ server_domain }} -d www.{{ server_domain }}
+    -d {{ server_domain }}
     --non-interactive
     --agree-tos
+    --expand
     --email {{ certbot_email }}
   when: not certbot_staging | bool
   register: certbot_prod_result

@@ -38,6 +38,7 @@
     - redis         # Redis 7 object cache
     - nginx         # Nginx + PHP-FPM 8.3
     - certbot       # Let's Encrypt TLS (runs after Nginx to validate domain)
+    - wordpress     # WP-CLI + WordPress core + WooCommerce + Redis cache plugin
     - netdata       # Real-time monitoring agent
 
   post_tasks:
