@@ -122,6 +122,11 @@ add_action('init', function () {
             ]);
         } else {
             $id = $existing->ID;
+            // Always enforce shortcode content — WC 8+ pre-creates these pages
+            // with the Checkout/Cart Block, which breaks traditional PHP gateways.
+            if (!empty($cfg['content'])) {
+                wp_update_post(['ID' => $id, 'post_content' => $cfg['content']]);
+            }
         }
         update_option($cfg['option'], $id);
     }

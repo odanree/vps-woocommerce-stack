@@ -77,12 +77,24 @@ ul.products::before,ul.products::after{display:none!important;}
 .woocommerce-products-header{display:none;}
 .woocommerce-ordering{margin-bottom:1.5rem;}
 .single-product .page-header,.single-product .entry-header{display:none!important;}
+.single-product #primary,.single-product .site-main,.single-product article.hentry,.single-product .type-product,.single-product .entry-content,.single-product .hentry{padding-top:0!important;margin-top:0!important;padding-bottom:0!important;}
 .single-product div.product div.images,.single-product div.product .woocommerce-product-gallery{float:none!important;width:100%!important;max-width:none!important;margin:0!important;}
 .single-product div.product div.summary,.single-product div.product .summary.entry-summary{float:none!important;width:100%!important;max-width:none!important;margin:0!important;}
-.single-product div.product{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;padding-top:1.5rem;}
-.single-product div.product .woocommerce-notices-wrapper{grid-column:1/-1;grid-row:1;height:0;overflow:hidden;}
+.single-product div.product{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;padding-top:.75rem;}
+.single-product div.product .woocommerce-notices-wrapper{grid-column:1/-1;grid-row:1;}
 .single-product div.product .woocommerce-product-gallery,.single-product div.product div.images{grid-column:1!important;grid-row:2;min-width:0;}
 .single-product div.product .summary.entry-summary{grid-column:2!important;grid-row:2;min-width:0;}
+.woocommerce-message,.woocommerce-error{display:flex!important;align-items:center!important;gap:.875rem!important;background:#eef2ff!important;color:#3730a3!important;border:1px solid #c7d2fe!important;border-top:none!important;border-radius:.75rem!important;padding:1rem 1.25rem!important;margin:0 0 1.25rem!important;box-shadow:0 4px 16px rgba(79,70,229,.1)!important;font-size:.875rem!important;font-weight:500!important;list-style:none!important;}
+.woocommerce-message::before{content:"\2713"!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:1.4rem!important;height:1.4rem!important;min-width:1.4rem!important;background:#4f46e5!important;color:#fff!important;font-size:.75rem!important;font-weight:800!important;border-radius:50%!important;flex-shrink:0!important;position:static!important;float:none!important;margin:0!important;font-family:inherit!important;line-height:1!important;}
+.woocommerce-error{background:#fef2f2!important;color:#991b1b!important;border-color:#fecaca!important;box-shadow:0 4px 16px rgba(239,68,68,.1)!important;}
+.woocommerce-error::before{content:"\0021"!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:1.4rem!important;height:1.4rem!important;min-width:1.4rem!important;background:#ef4444!important;color:#fff!important;font-size:.8rem!important;font-weight:800!important;border-radius:50%!important;flex-shrink:0!important;position:static!important;float:none!important;margin:0!important;font-family:inherit!important;line-height:1!important;}
+.woocommerce-message .button,.woocommerce-error .button{order:2!important;margin-left:auto!important;flex-shrink:0!important;padding:.4rem 1rem!important;background:transparent!important;color:#4f46e5!important;border:1px solid #a5b4fc!important;border-radius:.5rem!important;font-size:.8rem!important;font-weight:600!important;text-decoration:none!important;transition:background .2s,color .2s,border-color .2s!important;}
+.woocommerce-message .button:hover{background:#4f46e5!important;color:#fff!important;border-color:#4f46e5!important;}
+.woocommerce-info{display:flex!important;align-items:center!important;background:#f9fafb!important;color:#374151!important;border:1px solid #e5e7eb!important;border-top:3px solid #4f46e5!important;border-radius:.5rem!important;padding:.75rem 1.25rem!important;margin:0 0 1.5rem!important;font-size:.875rem!important;font-weight:500!important;list-style:none!important;gap:.5rem!important;}
+.woocommerce-info::before{display:none!important;content:""!important;}
+.woocommerce-info a{color:#4f46e5!important;font-weight:600!important;text-decoration:none!important;}
+.woocommerce-info a:hover{text-decoration:underline!important;}
+.woocommerce-info a.showcoupon{order:2!important;margin-left:auto!important;flex-shrink:0!important;}
 .woocommerce-product-gallery{border-radius:1.25rem;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,.12);}
 .woocommerce-product-gallery .flex-viewport{overflow:hidden;border-radius:1.25rem;}
 .woocommerce-product-gallery .flex-viewport img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform .6s ease;}
@@ -116,13 +128,13 @@ form.cart:not(.variations_form) .single_add_to_cart_button{width:100%;display:bl
 .sf-trust__item:last-child{border-right:none;}
 .sf-trust__item::before{content:"\2713";color:#4f46e5;font-weight:800;font-size:.9rem;flex-shrink:0;}
 .product_meta{display:none;}
-.woocommerce-tabs{grid-column:1/-1;margin-top:2rem;}
-.woocommerce-tabs .tabs,.woocommerce-tabs .wc-tabs{float:none!important;width:100%!important;display:flex!important;flex-wrap:wrap;list-style:none;padding:0;margin:0!important;border-bottom:2px solid #f3f4f6;}
-.woocommerce-tabs .tabs li,.woocommerce-tabs .wc-tabs li{float:none!important;width:auto!important;margin:0!important;border:none!important;background:none!important;}
-.woocommerce-tabs .tabs li a,.woocommerce-tabs .wc-tabs li a{display:block;padding:.6rem 1rem;font-size:.85rem;font-weight:600;color:#6b7280;text-decoration:none;border:none!important;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;background:none!important;white-space:nowrap;}
-.woocommerce-tabs .tabs li a:hover,.woocommerce-tabs .wc-tabs li a:hover{color:#374151;background:none!important;}
-.woocommerce-tabs .tabs li.active a,.woocommerce-tabs .wc-tabs li.active a{color:#4f46e5!important;border-bottom-color:#4f46e5!important;background:none!important;}
-.woocommerce-tabs .panel,.woocommerce-tabs .woocommerce-Tabs-panel{float:none!important;width:100%!important;padding:1.25rem 0;color:#374151;font-size:.95rem;line-height:1.75;border:none!important;margin:0!important;}
+.woocommerce-tabs{grid-column:1/-1;margin-top:.75rem;}
+.woocommerce-tabs .tabs,.woocommerce-tabs .wc-tabs{float:none!important;width:100%!important;display:flex!important;flex-wrap:wrap;gap:0;list-style:none!important;padding:0!important;margin:0!important;border:none!important;border-bottom:2px solid #f3f4f6!important;background:none!important;}
+.woocommerce-tabs .tabs li,.woocommerce-tabs .wc-tabs li,.woocommerce-tabs .tabs li.active,.woocommerce-tabs .wc-tabs li.active{float:none!important;width:auto!important;margin:0!important;padding:0!important;border:none!important;border-radius:0!important;background:none!important;box-shadow:none!important;}
+.woocommerce-tabs .tabs li a,.woocommerce-tabs .wc-tabs li a{display:block!important;padding:.75rem 1.5rem!important;font-size:.875rem!important;font-weight:600!important;color:#9ca3af!important;text-decoration:none!important;border:none!important;border-bottom:2px solid transparent!important;margin-bottom:-2px!important;transition:color .2s,border-color .2s!important;background:none!important;white-space:nowrap!important;letter-spacing:.01em!important;}
+.woocommerce-tabs .tabs li a:hover,.woocommerce-tabs .wc-tabs li a:hover{color:#374151!important;background:none!important;}
+.woocommerce-tabs .tabs li.active a,.woocommerce-tabs .wc-tabs li.active a{color:#4f46e5!important;border-bottom:2px solid #4f46e5!important;background:none!important;}
+.woocommerce-tabs .panel,.woocommerce-tabs .woocommerce-Tabs-panel{float:none!important;width:100%!important;padding:1.5rem 0!important;color:#374151;font-size:.95rem;line-height:1.75;border:none!important;margin:0!important;}
 .related.products{grid-column:1/-1;margin-top:1rem!important;}.related.products>h2{font-size:1.5rem;font-weight:800;color:#111827;margin-bottom:1.25rem;letter-spacing:-.02em;}
 @media(max-width:768px){.single-product div.product{grid-template-columns:1fr;gap:2rem;padding-top:1rem;}.single-product div.product .woocommerce-product-gallery,.single-product div.product div.images{grid-column:1!important;grid-row:2;}.single-product div.product .summary.entry-summary{grid-column:1!important;grid-row:3;}}
 @media(max-width:480px){.single-product .entry-summary .entry-title{font-size:1.5rem;}.sf-trust{flex-direction:column;}.sf-trust__item{border-right:none;border-bottom:1px solid #f3f4f6;}.sf-trust__item:last-child{border-bottom:none;}}
@@ -159,35 +171,40 @@ add_action('woocommerce_single_product_summary', function () {
     <?php
 }, 41);
 
+// ── Dequeue WC variation script (crashes via CSP no-eval) ───────────
+// wp.template() uses _.template() → new Function() which CSP blocks.
+// Our own JS below replaces everything that script does.
+add_action('wp_enqueue_scripts', function () {
+    if (is_product()) {
+        wp_dequeue_script('wc-add-to-cart-variation');
+    }
+}, 100);
+
 // ── PDP: Size pills + variation fix ─────────────────────────────────
 add_action('wp_footer', function () {
     if (!is_product()) return;
     ?>
     <script>
     jQuery(function($) {
+        var $form = $('form.variations_form');
+        if (!$form.length) return;
 
-        // ── Own variation resolver ───────────────────────────────────────
-        // Does NOT rely on WC's event chain — reads data-product_variations
-        // directly and writes variation_id + button state itself.
-        function resolveVariation($form) {
-            var varData = $form.data('product_variations');
-            if (!varData || !Array.isArray(varData)) return;
+        var varData = $form.data('product_variations') || [];
 
+        // ── Resolve variation from current select state ──────────────────
+        function resolveVariation() {
             var chosen = {};
             $form.find('.variations select').each(function() {
                 chosen[this.name] = this.value;
             });
 
-            var allChosen = Object.keys(chosen).every(function(k) {
-                return chosen[k] !== '';
-            });
+            var allChosen = Object.keys(chosen).every(function(k) { return chosen[k] !== ''; });
+            var $vi  = $form.find('input[name="variation_id"]');
+            var $btn = $form.find('.single_add_to_cart_button');
 
-            var $varInput = $form.find('input[name="variation_id"]');
-            var $btn      = $form.find('.single_add_to_cart_button');
-
-            if (!allChosen) {
-                $varInput.val(0);
-                $btn.addClass('disabled wc-variation-selection-needed').prop('disabled', true);
+            if (!allChosen || !varData.length) {
+                $vi.val(0);
+                $btn.addClass('disabled').prop('disabled', true);
                 return;
             }
 
@@ -195,65 +212,72 @@ add_action('wp_footer', function () {
             for (var i = 0; i < varData.length; i++) {
                 var v = varData[i], ok = true;
                 for (var attr in chosen) {
-                    var vVal = v.attributes[attr];
-                    // empty vVal means "any" in WC
-                    if (vVal && vVal !== chosen[attr]) { ok = false; break; }
+                    var vv = v.attributes[attr];
+                    if (vv && vv !== chosen[attr]) { ok = false; break; }
                 }
                 if (ok) { match = v; break; }
             }
 
-            if (match && match.variation_id) {
-                $varInput.val(match.variation_id);
+            if (match) {
+                $vi.val(match.variation_id);
                 $btn.removeClass('disabled wc-variation-selection-needed').prop('disabled', false);
             } else {
-                $varInput.val(0);
-                $btn.addClass('disabled wc-variation-selection-needed').prop('disabled', true);
+                $vi.val(0);
+                $btn.addClass('disabled').prop('disabled', true);
             }
         }
 
-        // ── Size pills ───────────────────────────────────────────────────
-        function initSizePills() {
-            var $form = $('form.variations_form');
+        // ── Sync pills to reflect current select values ──────────────────
+        function syncPills() {
             $form.find('.variations select').each(function() {
-                var $sel  = $(this);
-                var $wrap = $sel.closest('td');
-                if ($wrap.find('.sf-size-pills').length) return;
-
-                $sel.addClass('sf-select-hidden');
-                var $pills = $('<div class="sf-size-pills"></div>');
-
-                $sel.find('option').each(function() {
-                    var val = this.value, txt = this.text;
-                    if (!val) return;
-                    var $pill = $('<button type="button" class="sf-pill"></button>').text(txt);
-                    $pill.on('click', function() {
-                        $pills.find('.sf-pill').removeClass('is-active');
-                        $pill.addClass('is-active');
-                        $sel.val(val);
-                        resolveVariation($form);   // own resolver first
-                        $sel.trigger('change');    // then let WC update price/stock UI
-                    });
-                    $pills.append($pill);
-                });
-
-                $wrap.prepend($pills);
+                var cur = $(this).val();
+                $(this).closest('td').find('.sf-pill')
+                    .each(function() { $(this).toggleClass('is-active', $(this).data('sfVal') === cur); });
             });
+            resolveVariation();
         }
 
-        // Run after WC initialises the form (fires woocommerce_variation_form)
-        $(document).on('woocommerce_variation_form', function() { initSizePills(); });
-        initSizePills();
+        // ── Build pills from select options ──────────────────────────────
+        $form.find('.variations select').each(function() {
+            var $sel  = $(this);
+            var $wrap = $sel.closest('td');
+            $sel.addClass('sf-select-hidden');
+            var $pills = $('<div class="sf-size-pills"></div>');
+            $sel.find('option').each(function() {
+                var val = this.value, txt = this.text;
+                if (!val) return;
+                var $p = $('<button type="button" class="sf-pill"></button>').text(txt).data('sfVal', val);
+                $p.on('click', function() {
+                    $form.find('.sf-pill').removeClass('is-active');
+                    $p.addClass('is-active');
+                    $sel.val(val);
+                    resolveVariation();
+                });
+                $pills.append($p);
+            });
+            $wrap.prepend($pills);
+        });
 
-        // Belt-and-suspenders: if WC does fire found_variation, also confirm
-        $(document).on('found_variation', '.variations_form', function(e, v) {
-            $(this).find('input[name="variation_id"]').val(v.variation_id);
-            $(this).find('.single_add_to_cart_button')
-                .removeClass('disabled wc-variation-selection-needed')
-                .prop('disabled', false);
+        // ── "Clear" button ───────────────────────────────────────────────
+        $form.on('click', '.reset_variations', function(e) {
+            e.preventDefault();
+            $form.find('.variations select').val('');
+            $form.find('.sf-pill').removeClass('is-active');
+            resolveVariation();
         });
-        $(document).on('reset_data', '.variations_form', function() {
-            $(this).find('input[name="variation_id"]').val(0);
+
+        // ── Guard on submit ──────────────────────────────────────────────
+        $form.on('submit', function(e) {
+            resolveVariation();
+            if (parseInt($form.find('input[name="variation_id"]').val() || 0, 10) === 0) {
+                e.preventDefault();
+                window.alert('Please select a size before adding to your cart.');
+                return false;
+            }
         });
+
+        // ── Initial state (PHP may have pre-selected a default attr) ─────
+        syncPills();
     });
     </script>
     <?php
@@ -315,6 +339,21 @@ add_action('storefront_before_header', function () {
     </div>
     <?php
 }, 5);
+
+// ── Register legacy woocommerce-layout handle (removed in newer WC, still depended on) ──
+add_action('wp_enqueue_scripts', function () {
+    if (!wp_style_is('woocommerce-layout', 'registered')) {
+        wp_register_style('woocommerce-layout', false, [], null);
+    }
+}, 1);
+
+// ── Post-add-to-cart: redirect back to product page (prevents refresh resubmit) ──
+add_filter('woocommerce_add_to_cart_redirect', function ($url) {
+    if (!empty($_SERVER['HTTP_REFERER'])) {
+        return $_SERVER['HTTP_REFERER'];
+    }
+    return $url;
+});
 
 // ── Breadcrumbs ──────────────────────────────────────────────────────
 add_action('init', function () {
