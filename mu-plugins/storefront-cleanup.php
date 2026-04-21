@@ -76,16 +76,23 @@ ul.products::before,ul.products::after{display:none!important;}
 .sf-section-head__sub{color:#6b7280;font-size:1rem;max-width:420px;margin:0 auto 3rem;line-height:1.65;}
 .woocommerce-products-header{display:none;}
 .woocommerce-ordering{margin-bottom:1.5rem;}
-.single-product div.product{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;margin-top:1.5rem;}
-.woocommerce-product-gallery{position:sticky;top:88px;border-radius:1.25rem;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,.12);}
+.single-product .page-header,.single-product .entry-header{display:none!important;}
+.single-product div.product div.images,.single-product div.product .woocommerce-product-gallery{float:none!important;width:100%!important;max-width:none!important;margin:0!important;}
+.single-product div.product div.summary,.single-product div.product .summary.entry-summary{float:none!important;width:100%!important;max-width:none!important;margin:0!important;}
+.single-product div.product{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;padding-top:1.5rem;}
+.single-product div.product .woocommerce-notices-wrapper{grid-column:1/-1;grid-row:1;height:0;overflow:hidden;}
+.single-product div.product .woocommerce-product-gallery,.single-product div.product div.images{grid-column:1!important;grid-row:2;min-width:0;}
+.single-product div.product .summary.entry-summary{grid-column:2!important;grid-row:2;min-width:0;}
+.woocommerce-product-gallery{border-radius:1.25rem;overflow:hidden;box-shadow:0 20px 40px -10px rgba(0,0,0,.12);}
 .woocommerce-product-gallery .flex-viewport{overflow:hidden;border-radius:1.25rem;}
-.woocommerce-product-gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform .6s ease;}
-.woocommerce-product-gallery:hover img{transform:scale(1.04);}
+.woocommerce-product-gallery .flex-viewport img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform .6s ease;}
+.woocommerce-product-gallery .flex-control-thumbs img{aspect-ratio:1/1;object-fit:cover;}
+.woocommerce-product-gallery:hover .flex-viewport img{transform:scale(1.04);}
 .single-product .entry-summary{padding:0;}
 .single-product .entry-summary .entry-title{font-size:2rem;font-weight:800;color:#111827;letter-spacing:-.03em;line-height:1.15;margin:0 0 .75rem;}
 .single-product p.price,.single-product span.price{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:2rem!important;font-weight:800!important;margin:0 0 1.5rem!important;display:inline-block;}
 .woocommerce-variation-price .price{font-size:1.5rem!important;}
-.woocommerce-product-details__short-description{color:#6b7280;font-size:.95rem;line-height:1.7;margin-bottom:1.75rem;border-bottom:1px solid #f3f4f6;padding-bottom:1.75rem;}
+.woocommerce-product-details__short-description{color:#6b7280;font-size:.95rem;line-height:1.7;margin-bottom:1.25rem;border-bottom:1px solid #f3f4f6;padding-bottom:1.25rem;}
 .variations{width:100%;margin-bottom:.5rem;}
 .variations td,.variations th{padding:.4rem 0;vertical-align:top;border:none;}
 .variations label{font-size:.72rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.1em;line-height:2.5;}
@@ -104,20 +111,20 @@ form.cart:not(.variations_form) .single_add_to_cart_button{width:100%;display:bl
 .single_add_to_cart_button:not(.disabled):not(:disabled):hover::after{transform:translateX(100%);}
 .single_add_to_cart_button:hover{opacity:.9!important;transform:translateY(-2px);box-shadow:0 10px 28px rgba(79,70,229,.5)!important;}
 .single_add_to_cart_button:disabled,.single_add_to_cart_button.disabled{opacity:.4!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important;}
-.sf-trust{display:flex;margin-top:1.5rem;border:1px solid #f3f4f6;border-radius:.75rem;overflow:hidden;}
+.sf-trust{display:flex;margin-top:1rem;border:1px solid #f3f4f6;border-radius:.75rem;overflow:hidden;}
 .sf-trust__item{display:flex;align-items:center;gap:.5rem;flex:1;padding:.875rem 1rem;font-size:.75rem;font-weight:600;color:#374151;background:#f9fafb;border-right:1px solid #f3f4f6;}
 .sf-trust__item:last-child{border-right:none;}
 .sf-trust__item::before{content:"\2713";color:#4f46e5;font-weight:800;font-size:.9rem;flex-shrink:0;}
-.product_meta{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #f3f4f6;font-size:.8rem;color:#9ca3af;}
-.woocommerce-tabs{margin-top:3.5rem;clear:both;}
-.woocommerce-tabs .tabs{display:flex;list-style:none;padding:0;margin:0 0 1.5rem;border-bottom:2px solid #f3f4f6;}
-.woocommerce-tabs .tabs li{margin:0;}
-.woocommerce-tabs .tabs li a{display:block;padding:.75rem 1.5rem;font-size:.875rem;font-weight:600;color:#6b7280;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}
-.woocommerce-tabs .tabs li a:hover{color:#374151;}
-.woocommerce-tabs .tabs li.active a{color:#4f46e5!important;border-bottom-color:#4f46e5;}
-.woocommerce-tabs .panel{padding:1.5rem 0;color:#374151;font-size:.95rem;line-height:1.75;}
-.related.products>h2{font-size:1.5rem;font-weight:800;color:#111827;margin-bottom:1.5rem;letter-spacing:-.02em;}
-@media(max-width:900px){.single-product div.product{grid-template-columns:1fr;gap:2rem;}.woocommerce-product-gallery{position:relative;top:0;}}
+.product_meta{display:none;}
+.woocommerce-tabs{grid-column:1/-1;margin-top:2rem;}
+.woocommerce-tabs .tabs,.woocommerce-tabs .wc-tabs{float:none!important;width:100%!important;display:flex!important;flex-wrap:wrap;list-style:none;padding:0;margin:0!important;border-bottom:2px solid #f3f4f6;}
+.woocommerce-tabs .tabs li,.woocommerce-tabs .wc-tabs li{float:none!important;width:auto!important;margin:0!important;border:none!important;background:none!important;}
+.woocommerce-tabs .tabs li a,.woocommerce-tabs .wc-tabs li a{display:block;padding:.6rem 1rem;font-size:.85rem;font-weight:600;color:#6b7280;text-decoration:none;border:none!important;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;background:none!important;white-space:nowrap;}
+.woocommerce-tabs .tabs li a:hover,.woocommerce-tabs .wc-tabs li a:hover{color:#374151;background:none!important;}
+.woocommerce-tabs .tabs li.active a,.woocommerce-tabs .wc-tabs li.active a{color:#4f46e5!important;border-bottom-color:#4f46e5!important;background:none!important;}
+.woocommerce-tabs .panel,.woocommerce-tabs .woocommerce-Tabs-panel{float:none!important;width:100%!important;padding:1.25rem 0;color:#374151;font-size:.95rem;line-height:1.75;border:none!important;margin:0!important;}
+.related.products{grid-column:1/-1;margin-top:1rem!important;}.related.products>h2{font-size:1.5rem;font-weight:800;color:#111827;margin-bottom:1.25rem;letter-spacing:-.02em;}
+@media(max-width:768px){.single-product div.product{grid-template-columns:1fr;gap:2rem;padding-top:1rem;}.single-product div.product .woocommerce-product-gallery,.single-product div.product div.images{grid-column:1!important;grid-row:2;}.single-product div.product .summary.entry-summary{grid-column:1!important;grid-row:3;}}
 @media(max-width:480px){.single-product .entry-summary .entry-title{font-size:1.5rem;}.sf-trust{flex-direction:column;}.sf-trust__item{border-right:none;border-bottom:1px solid #f3f4f6;}.sf-trust__item:last-child{border-bottom:none;}}
 @media(max-width:900px){.sf-hero__inner{grid-template-columns:1fr;}.sf-hero__visual{display:none;}.sf-hero__sub{max-width:100%;}.sf-hero__stats{gap:1.75rem;}}
 @media(max-width:480px){.sf-hero{padding:3.5rem 1.25rem 3rem;}.sf-hero__stats{gap:1.25rem;}.sf-hero__actions{flex-direction:column;}.sf-hero__cta-primary,.sf-hero__cta-secondary{justify-content:center;}}
@@ -139,11 +146,10 @@ ul.products li.product .button:hover{background:#4338ca!important;}
 .site-footer a{color:#6b7280;}
     ';
     echo '</style>';
-}, 1);
+}, 999);
 
-// ── PDP: Trust badges ───────────────────────────────────────────────
-add_action('woocommerce_after_add_to_cart_button', function () {
-    if (!is_product()) return;
+// ── PDP: Trust badges (after cart form, before meta) ────────────────
+add_action('woocommerce_single_product_summary', function () {
     ?>
     <div class="sf-trust">
         <div class="sf-trust__item">Free shipping over $50</div>
@@ -151,7 +157,7 @@ add_action('woocommerce_after_add_to_cart_button', function () {
         <div class="sf-trust__item">100% premium cotton</div>
     </div>
     <?php
-});
+}, 41);
 
 // ── PDP: Size pills + variation fix ─────────────────────────────────
 add_action('wp_footer', function () {
@@ -159,13 +165,63 @@ add_action('wp_footer', function () {
     ?>
     <script>
     jQuery(function($) {
+
+        // ── Own variation resolver ───────────────────────────────────────
+        // Does NOT rely on WC's event chain — reads data-product_variations
+        // directly and writes variation_id + button state itself.
+        function resolveVariation($form) {
+            var varData = $form.data('product_variations');
+            if (!varData || !Array.isArray(varData)) return;
+
+            var chosen = {};
+            $form.find('.variations select').each(function() {
+                chosen[this.name] = this.value;
+            });
+
+            var allChosen = Object.keys(chosen).every(function(k) {
+                return chosen[k] !== '';
+            });
+
+            var $varInput = $form.find('input[name="variation_id"]');
+            var $btn      = $form.find('.single_add_to_cart_button');
+
+            if (!allChosen) {
+                $varInput.val(0);
+                $btn.addClass('disabled wc-variation-selection-needed').prop('disabled', true);
+                return;
+            }
+
+            var match = null;
+            for (var i = 0; i < varData.length; i++) {
+                var v = varData[i], ok = true;
+                for (var attr in chosen) {
+                    var vVal = v.attributes[attr];
+                    // empty vVal means "any" in WC
+                    if (vVal && vVal !== chosen[attr]) { ok = false; break; }
+                }
+                if (ok) { match = v; break; }
+            }
+
+            if (match && match.variation_id) {
+                $varInput.val(match.variation_id);
+                $btn.removeClass('disabled wc-variation-selection-needed').prop('disabled', false);
+            } else {
+                $varInput.val(0);
+                $btn.addClass('disabled wc-variation-selection-needed').prop('disabled', true);
+            }
+        }
+
+        // ── Size pills ───────────────────────────────────────────────────
         function initSizePills() {
-            $('.variations select').each(function() {
-                var $sel = $(this);
+            var $form = $('form.variations_form');
+            $form.find('.variations select').each(function() {
+                var $sel  = $(this);
                 var $wrap = $sel.closest('td');
                 if ($wrap.find('.sf-size-pills').length) return;
+
                 $sel.addClass('sf-select-hidden');
                 var $pills = $('<div class="sf-size-pills"></div>');
+
                 $sel.find('option').each(function() {
                     var val = this.value, txt = this.text;
                     if (!val) return;
@@ -173,26 +229,28 @@ add_action('wp_footer', function () {
                     $pill.on('click', function() {
                         $pills.find('.sf-pill').removeClass('is-active');
                         $pill.addClass('is-active');
-                        $sel.val(val).trigger('change');
+                        $sel.val(val);
+                        resolveVariation($form);   // own resolver first
+                        $sel.trigger('change');    // then let WC update price/stock UI
                     });
                     $pills.append($pill);
                 });
+
                 $wrap.prepend($pills);
             });
         }
 
-        // Initialise after WC variation form is ready
+        // Run after WC initialises the form (fires woocommerce_variation_form)
         $(document).on('woocommerce_variation_form', function() { initSizePills(); });
         initSizePills();
 
-        // Backup: ensure variation_id is set when WC fires found_variation
-        $(document).on('found_variation', '.variations_form', function(e, variation) {
-            $(this).find('input[name="variation_id"]').val(variation.variation_id);
+        // Belt-and-suspenders: if WC does fire found_variation, also confirm
+        $(document).on('found_variation', '.variations_form', function(e, v) {
+            $(this).find('input[name="variation_id"]').val(v.variation_id);
             $(this).find('.single_add_to_cart_button')
                 .removeClass('disabled wc-variation-selection-needed')
                 .prop('disabled', false);
         });
-
         $(document).on('reset_data', '.variations_form', function() {
             $(this).find('input[name="variation_id"]').val(0);
         });
