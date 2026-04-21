@@ -1,0 +1,117 @@
+---
+# Publishes custom CSS via wp_update_custom_css_in_post() — the correct mechanism.
+# wp option update additional_css only writes a draft; wp_get_custom_css() reads
+# from the published custom_css post type, which this playbook writes directly.
+#
+# Run: ansible-playbook -i inventory/hosts publish-css.yml
+
+- name: Publish custom CSS for Storefront
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+
+  tasks:
+
+    - name: Write CSS to temp file
+      copy:
+        dest: /tmp/headless-match.css
+        mode: "0644"
+        content: |
+          /* ── Custom single-row header ─────────────────────── */
+          .sf-header { background:#fff; border-bottom:1px solid #e5e7eb; }
+          .sf-header__inner { max-width:1280px; margin:0 auto; padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:2rem; }
+          .sf-logo { font-size:1.5rem; font-weight:700; color:#111827; text-decoration:none; flex-shrink:0; }
+          .sf-logo:hover { color:#4f46e5; }
+          .sf-header__right { display:flex; align-items:center; gap:1.5rem; flex:1; justify-content:flex-end; }
+
+          .sf-search { display:flex; max-width:260px; width:100%; }
+          .sf-search__input { width:100%; padding:0.5rem 0.75rem; border:1px solid #e5e7eb; border-radius:0.375rem; font-size:0.875rem; color:#374151; background:#f9fafb; outline:none; }
+          .sf-search__input:focus { border-color:#4f46e5; background:#fff; box-shadow:0 0 0 2px rgba(79,70,229,0.1); }
+
+          .sf-nav { display:flex; align-items:center; gap:1.5rem; }
+          .sf-nav__list { display:flex; align-items:center; gap:1.5rem; list-style:none; margin:0; padding:0; }
+          .sf-nav__list li a, .sf-nav__link { font-size:0.875rem; font-weight:500; color:#374151; text-decoration:none; transition:color 0.2s; }
+          .sf-nav__list li a:hover, .sf-nav__link:hover { color:#4f46e5; }
+          .sf-cart__count { display:inline-flex; align-items:center; justify-content:center; background:#4f46e5; color:#fff; font-size:0.7rem; font-weight:700; border-radius:9999px; min-width:1.1rem; height:1.1rem; padding:0 0.25rem; margin-left:0.25rem; vertical-align:middle; }
+
+          /* Hide old Storefront header rows */
+          .site-header > .col-full { display:none !important; }
+
+          /* ── Sidebar ──────────────────────────────────────── */
+          #secondary { display:none !important; }
+          #primary { width:100% !important; float:none !important; }
+
+          /* ── Breadcrumbs ──────────────────────────────────── */
+          .woocommerce-breadcrumb { display:none !important; }
+
+          /* ── Page title on front page ─────────────────────── */
+          .home.page .entry-header { display:none !important; }
+
+          /* ── Hero cover block ─────────────────────────────── */
+          .wp-block-cover.alignfull { width:100vw; margin-left:calc(50% - 50vw); }
+          .wp-block-cover__inner-container { max-width:700px; margin:0 auto; padding:0 1.5rem; }
+
+          /* ── Product grid ─────────────────────────────────── */
+          ul.products { display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:1.5rem !important; list-style:none !important; padding:0 !important; margin:0 auto !important; max-width:1280px; }
+          @media(max-width:900px){ ul.products { grid-template-columns:repeat(2,1fr) !important; } }
+          @media(max-width:480px){ ul.products { grid-template-columns:1fr !important; } }
+
+          ul.products li.product { border:1px solid #e5e7eb !important; border-radius:0.5rem !important; overflow:hidden; transition:box-shadow 0.3s ease; padding:0 !important; background:#fff; }
+          ul.products li.product:hover { box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05) !important; }
+          ul.products li.product a { text-decoration:none; color:inherit; }
+          ul.products li.product a img { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; margin:0 !important; transition:transform 0.3s ease; }
+          ul.products li.product:hover a img { transform:scale(1.05); }
+          ul.products li.product .woocommerce-loop-product__title { font-size:0.95rem !important; font-weight:600 !important; padding:1rem 1rem 0.25rem !important; transition:color 0.2s; color:#111827; }
+          ul.products li.product:hover .woocommerce-loop-product__title { color:#4f46e5; }
+          ul.products li.product .price { padding:0.25rem 1rem 0 !important; font-size:1.1rem !important; font-weight:700 !important; color:#111827 !important; display:block; }
+          ul.products li.product .button { margin:0.75rem 1rem 1rem !important; display:block; text-align:center; font-size:0.875rem !important; font-weight:600 !important; border-radius:0.375rem !important; padding:0.6rem 1rem !important; background:#4f46e5 !important; color:#fff !important; border:none !important; transition:background 0.2s; }
+          ul.products li.product .button:hover { background:#4338ca !important; }
+
+          /* ── Footer ───────────────────────────────────────── */
+          .footer-widgets { display:none; }
+          .site-info { text-align:center; padding:1.5rem; font-size:0.85rem; color:#9ca3af; border-top:1px solid #e5e7eb; }
+          .site-footer a { color:#6b7280; }
+
+    - name: Write CSS publisher PHP
+      copy:
+        dest: /tmp/publish-css.php
+        mode: "0644"
+        content: |
+          <?php
+          $css = file_get_contents('/tmp/headless-match.css');
+          $result = wp_update_custom_css_in_post($css, [
+              'stylesheet' => get_stylesheet(),
+          ]);
+          if (is_wp_error($result)) {
+              echo 'ERROR: ' . $result->get_error_message();
+          } else {
+              echo 'Published ' . strlen($css) . ' bytes of CSS (post ID: ' . $result . ')';
+          }
+
+    - name: Publish CSS via wp_update_custom_css_in_post
+      command: "{{ wp }} eval-file /tmp/publish-css.php"
+      register: css_result
+      changed_when: true
+
+    - name: Show CSS publish result
+      debug:
+        msg: "{{ css_result.stdout }}"
+
+    - name: Clean up temp files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/headless-match.css
+        - /tmp/publish-css.php
+
+    - name: Flush Redis object cache
+      command: redis-cli FLUSHDB
+      become: true
+      become_user: root
+      changed_when: false
+      failed_when: false

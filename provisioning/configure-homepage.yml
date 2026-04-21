@@ -1,0 +1,159 @@
+---
+# Creates a custom homepage for the Storefront theme:
+# - Full-width dark hero with headline + Shop Now CTA
+# - Featured products grid (8 products, 4 columns)
+# - Custom CSS for clean, modern appearance
+#
+# Run: ansible-playbook -i inventory/hosts configure-homepage.yml
+
+- name: Configure Storefront homepage
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+
+  tasks:
+
+    # ── Homepage content ──────────────────────────────────────────────────────
+
+    - name: Write homepage block content to temp file
+      copy:
+        dest: /tmp/homepage-content.html
+        mode: "0644"
+        content: |
+          <!-- wp:cover {"customOverlayColor":"#1a1a1a","minHeight":480,"align":"full","isDark":true} -->
+          <div class="wp-block-cover alignfull is-dark" style="min-height:480px"><span aria-hidden="true" class="wp-block-cover__background has-background-dim-100 has-background-dim" style="background-color:#1a1a1a"></span><div class="wp-block-cover__inner-container">
+          <!-- wp:heading {"textAlign":"center","level":1,"style":{"typography":{"fontSize":"2.8rem","fontStyle":"normal","fontWeight":"700"},"spacing":{"margin":{"bottom":"1rem"}}},"textColor":"white"} -->
+          <h1 class="wp-block-heading has-text-align-center has-white-color has-text-color" style="margin-bottom:1rem;font-size:2.8rem;font-style:normal;font-weight:700">Developer Gear for People Who Ship</h1>
+          <!-- /wp:heading -->
+          <!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"1.15rem"},"spacing":{"margin":{"bottom":"2rem"}}},"textColor":"white"} -->
+          <p class="has-text-align-center has-white-color has-text-color" style="margin-bottom:2rem;font-size:1.15rem">Premium t-shirts for developers, designers, and builders.</p>
+          <!-- /wp:paragraph -->
+          <!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
+          <div class="wp-block-buttons"><!-- wp:button {"style":{"border":{"radius":"4px"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"2rem","right":"2rem"}}}} -->
+          <div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/shop" style="border-radius:4px;padding-top:0.85rem;padding-right:2rem;padding-bottom:0.85rem;padding-left:2rem">Shop Now</a></div>
+          <!-- /wp:button --></div>
+          <!-- /wp:buttons -->
+          </div></div>
+          <!-- /wp:cover -->
+
+          <!-- wp:spacer {"height":"56px"} -->
+          <div style="height:56px" aria-hidden="true" class="wp-block-spacer"></div>
+          <!-- /wp:spacer -->
+
+          <!-- wp:heading {"textAlign":"center","level":2,"style":{"typography":{"fontSize":"1.8rem","fontWeight":"600"},"spacing":{"margin":{"bottom":"0.5rem"}}}} -->
+          <h2 class="wp-block-heading has-text-align-center" style="margin-bottom:0.5rem;font-size:1.8rem;font-weight:600">Featured Products</h2>
+          <!-- /wp:heading -->
+
+          <!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"1rem"},"spacing":{"margin":{"bottom":"2.5rem"}}},"textColor":"medium-gray"} -->
+          <p class="has-text-align-center" style="margin-bottom:2.5rem;font-size:1rem">Wear the stack you build with.</p>
+          <!-- /wp:paragraph -->
+
+          <!-- wp:shortcode -->
+          [products limit="8" columns="4" orderby="date" order="DESC"]
+          <!-- /wp:shortcode -->
+
+          <!-- wp:spacer {"height":"56px"} -->
+          <div style="height:56px" aria-hidden="true" class="wp-block-spacer"></div>
+          <!-- /wp:spacer -->
+
+    - name: Write homepage PHP creator to temp file
+      copy:
+        dest: /tmp/create-homepage.php
+        mode: "0644"
+        content: |
+          <?php
+          $content = file_get_contents('/tmp/homepage-content.html');
+          $existing = get_page_by_path('home-storefront');
+          if ($existing) {
+              wp_update_post([
+                  'ID'           => $existing->ID,
+                  'post_content' => $content,
+              ]);
+              echo $existing->ID;
+          } else {
+              echo wp_insert_post([
+                  'post_title'   => 'Home',
+                  'post_name'    => 'home-storefront',
+                  'post_status'  => 'publish',
+                  'post_type'    => 'page',
+                  'post_content' => $content,
+              ]);
+          }
+
+    - name: Create / update homepage via WP eval-file
+      command: "{{ wp }} eval-file /tmp/create-homepage.php"
+      register: homepage_id
+      changed_when: true
+
+    - name: Set homepage as static front page
+      command: "{{ wp }} option update show_on_front page"
+      changed_when: false
+
+    - name: Point front page to new homepage
+      command: "{{ wp }} option update page_on_front {{ homepage_id.stdout | trim }}"
+      changed_when: false
+
+    # ── Custom CSS ────────────────────────────────────────────────────────────
+
+    - name: Inject custom CSS for clean storefront appearance
+      command: >
+        {{ wp }} option update custom_css_post_id 0
+      changed_when: false
+      failed_when: false
+
+    - name: Write custom CSS via additional_css
+      shell: |
+        {{ wp }} option update additional_css '
+        /* ── Global ──────────────────────────────────────────── */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* ── Header ──────────────────────────────────────────── */
+        .site-header { border-bottom: 1px solid #e8e8e8; padding: 0; }
+        .site-branding { padding: 1.2rem 0; }
+        .site-title a { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none; }
+        .main-navigation ul li a { font-size: 0.9rem; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; }
+
+        /* ── Hero cover block ─────────────────────────────────── */
+        .wp-block-cover.alignfull { width: 100vw; margin-left: calc(50% - 50vw); }
+        .wp-block-cover__inner-container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
+
+        /* ── Section headings ─────────────────────────────────── */
+        .wp-block-heading { color: #1a1a1a; }
+
+        /* ── WooCommerce product grid ─────────────────────────── */
+        ul.products { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1.5rem !important; list-style: none !important; padding: 0 !important; margin: 0 auto !important; max-width: 1200px; }
+        @media (max-width: 900px) { ul.products { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 480px) { ul.products { grid-template-columns: 1fr !important; } }
+
+        ul.products li.product { border: 1px solid #efefef; border-radius: 8px; overflow: hidden; transition: box-shadow 0.2s; padding: 0 !important; }
+        ul.products li.product:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.09); }
+        ul.products li.product a img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; margin: 0 !important; }
+        ul.products li.product .woocommerce-loop-product__title { font-size: 0.95rem !important; font-weight: 600; padding: 0.75rem 1rem 0.25rem; }
+        ul.products li.product .price { padding: 0 1rem 0.5rem; font-size: 0.9rem; color: #444; }
+        ul.products li.product .button { margin: 0 1rem 1rem; display: block; text-align: center; font-size: 0.85rem; font-weight: 600; border-radius: 4px; padding: 0.6rem 1rem; }
+
+        /* ── Buttons ──────────────────────────────────────────── */
+        .wp-element-button, .button, button, input[type="submit"] { border-radius: 4px !important; font-weight: 600 !important; letter-spacing: 0.02em !important; }
+
+        /* ── Footer ───────────────────────────────────────────── */
+        .site-footer { border-top: 1px solid #e8e8e8; margin-top: 3rem; }
+        '
+      args:
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Flush rewrite rules
+      command: "{{ wp }} rewrite flush"
+      changed_when: false
+
+    - name: Clean up temp files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/homepage-content.html
+        - /tmp/create-homepage.php
