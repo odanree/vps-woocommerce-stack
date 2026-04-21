@@ -54,14 +54,12 @@ $hero = <<<'HTML'
 <!-- /wp:html -->
 
 <!-- wp:html -->
-<div class="sf-hero__section-label">
-  <span>Featured Products</span>
+<div class="sf-section-head">
+  <span class="sf-section-head__eyebrow">Our collection</span>
+  <h2 class="sf-section-head__title">Featured Products</h2>
+  <p class="sf-section-head__sub">Wear the stack you build with.</p>
 </div>
 <!-- /wp:html -->
-
-<!-- wp:paragraph {"align":"center","style":{"typography":{"fontSize":"1rem"},"spacing":{"margin":{"bottom":"2.5rem"}}}} -->
-<p class="has-text-align-center" style="margin-bottom:2.5rem;font-size:1rem;color:#6b7280;">Wear the stack you build with.</p>
-<!-- /wp:paragraph -->
 
 <!-- wp:shortcode -->
 [products limit="8" columns="4" orderby="date" order="DESC"]
