@@ -1,0 +1,169 @@
+---
+# Installs and activates the Storefront theme and configures WooCommerce
+# storefront-specific settings (shop page, homepage layout, basic customizer values).
+#
+# Run: ansible-playbook -i inventory/hosts storefront-theme.yml
+
+- name: Configure Storefront theme
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+
+  tasks:
+
+    # ── Theme ─────────────────────────────────────────────────────────────────
+
+    - name: Check if Storefront is installed
+      command: "{{ wp }} theme is-installed storefront"
+      register: theme_installed
+      failed_when: false
+      changed_when: false
+
+    - name: Install Storefront theme
+      command: "{{ wp }} theme install storefront"
+      when: theme_installed.rc != 0
+
+    - name: Activate Storefront theme
+      command: "{{ wp }} theme activate storefront"
+
+    # ── Shop page ─────────────────────────────────────────────────────────────
+
+    - name: Check if Shop page exists
+      command: >
+        {{ wp }} post list --post_type=page
+        --name=shop --field=ID --format=csv
+      register: shop_page
+      changed_when: false
+
+    - name: Create Shop page
+      command: >
+        {{ wp }} post create
+        --post_title="Shop"
+        --post_name="shop"
+        --post_status=publish
+        --post_type=page
+        --porcelain
+      register: shop_page_id
+      when: shop_page.stdout | trim == ""
+
+    - name: Set WooCommerce shop page
+      command: >
+        {{ wp }} option update woocommerce_shop_page_id
+        {{ shop_page_id.stdout | trim if shop_page.stdout | trim == "" else shop_page.stdout | trim }}
+      changed_when: false
+
+    # ── Cart / checkout pages ─────────────────────────────────────────────────
+
+    - name: Check if Cart page exists
+      command: >
+        {{ wp }} post list --post_type=page
+        --name=cart --field=ID --format=csv
+      register: cart_page
+      changed_when: false
+
+    - name: Create Cart page
+      command: >
+        {{ wp }} post create
+        --post_title="Cart"
+        --post_name="cart"
+        --post_status=publish
+        --post_type=page
+        --post_content='<!-- wp:shortcode -->[woocommerce_cart]<!-- /wp:shortcode -->'
+        --porcelain
+      register: cart_page_id
+      when: cart_page.stdout | trim == ""
+
+    - name: Set WooCommerce cart page
+      command: >
+        {{ wp }} option update woocommerce_cart_page_id
+        {{ cart_page_id.stdout | trim if cart_page.stdout | trim == "" else cart_page.stdout | trim }}
+      changed_when: false
+
+    - name: Check if Checkout page exists
+      command: >
+        {{ wp }} post list --post_type=page
+        --name=checkout --field=ID --format=csv
+      register: checkout_page
+      changed_when: false
+
+    - name: Create Checkout page
+      command: >
+        {{ wp }} post create
+        --post_title="Checkout"
+        --post_name="checkout"
+        --post_status=publish
+        --post_type=page
+        --post_content='<!-- wp:shortcode -->[woocommerce_checkout]<!-- /wp:shortcode -->'
+        --porcelain
+      register: checkout_page_id
+      when: checkout_page.stdout | trim == ""
+
+    - name: Set WooCommerce checkout page
+      command: >
+        {{ wp }} option update woocommerce_checkout_page_id
+        {{ checkout_page_id.stdout | trim if checkout_page.stdout | trim == "" else checkout_page.stdout | trim }}
+      changed_when: false
+
+    # ── My Account page ───────────────────────────────────────────────────────
+
+    - name: Check if My Account page exists
+      command: >
+        {{ wp }} post list --post_type=page
+        --name=my-account --field=ID --format=csv
+      register: myaccount_page
+      changed_when: false
+
+    - name: Create My Account page
+      command: >
+        {{ wp }} post create
+        --post_title="My Account"
+        --post_name="my-account"
+        --post_status=publish
+        --post_type=page
+        --post_content='<!-- wp:shortcode -->[woocommerce_my_account]<!-- /wp:shortcode -->'
+        --porcelain
+      register: myaccount_page_id
+      when: myaccount_page.stdout | trim == ""
+
+    - name: Set WooCommerce my account page
+      command: >
+        {{ wp }} option update woocommerce_myaccount_page_id
+        {{ myaccount_page_id.stdout | trim if myaccount_page.stdout | trim == "" else myaccount_page.stdout | trim }}
+      changed_when: false
+
+    # ── Homepage: point to Shop ───────────────────────────────────────────────
+
+    - name: Set reading settings — static front page
+      command: "{{ wp }} option update show_on_front page"
+      changed_when: false
+
+    - name: Point homepage to Shop
+      command: >
+        {{ wp }} option update page_on_front
+        {{ shop_page_id.stdout | trim if shop_page.stdout | trim == "" else shop_page.stdout | trim }}
+      changed_when: false
+
+    # ── Storefront customizer defaults ────────────────────────────────────────
+
+    - name: Set Storefront header background color
+      command: "{{ wp }} option patch update theme_mods_storefront header_background_color #ffffff"
+      changed_when: false
+      failed_when: false
+
+    - name: Set Storefront header text color
+      command: "{{ wp }} option patch update theme_mods_storefront header_text_color #333333"
+      changed_when: false
+      failed_when: false
+
+    - name: Set Storefront button background color
+      command: "{{ wp }} option patch update theme_mods_storefront storefront_button_background_color #333333"
+      changed_when: false
+      failed_when: false
+
+    - name: Flush rewrite rules
+      command: "{{ wp }} rewrite flush"
+      changed_when: false
