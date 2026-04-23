@@ -1,0 +1,216 @@
+---
+# Cleans up Storefront theme layout:
+# - Full-width (no sidebar)
+# - Clean primary nav (Shop + My Account only)
+# - Hide header search widget
+# - Hide page title on front page
+# - Remove breadcrumbs
+# - Remove Storefront footer links and WooCommerce credit
+#
+# Run: ansible-playbook -i inventory/hosts cleanup-storefront.yml
+
+- name: Clean up Storefront theme
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+
+  tasks:
+
+    # ── Layout / tagline / header widget via eval-file ───────────────────────
+
+    - name: Write layout + header cleanup PHP to temp file
+      copy:
+        dest: /tmp/storefront-setup.php
+        mode: "0644"
+        content: |
+          <?php
+          // Full-width layout (no sidebar)
+          set_theme_mod('storefront_layout', 'full-width');
+
+          // Clear site tagline
+          update_option('blogdescription', '');
+
+          // Clear header-1 widget area (removes search bar from header)
+          // Clear sidebar-1 widget area (removes all sidebar widgets)
+          $sw = get_option('sidebars_widgets', []);
+          $sw['header-1'] = [];
+          $sw['sidebar-1'] = [];
+          update_option('sidebars_widgets', $sw);
+
+          echo 'done';
+
+    - name: Run layout + header cleanup
+      command: "{{ wp }} eval-file /tmp/storefront-setup.php"
+      changed_when: true
+
+    - name: Remove layout setup temp file
+      file:
+        path: /tmp/storefront-setup.php
+        state: absent
+
+    # ── Navigation: create clean primary menu ─────────────────────────────────
+
+    - name: Write menu setup PHP to temp file
+      copy:
+        dest: /tmp/setup-menu.php
+        mode: "0644"
+        content: |
+          <?php
+          // Remove any existing primary menu
+          $locations = get_nav_menu_locations();
+          if (!empty($locations['primary'])) {
+              wp_delete_nav_menu($locations['primary']);
+          }
+
+          // Create clean menu
+          $menu_id = wp_create_nav_menu('Primary Navigation');
+
+          $pages = [
+              'shop'       => 'Shop',
+              'my-account' => 'My Account',
+          ];
+
+          foreach ($pages as $slug => $title) {
+              $page = get_page_by_path($slug);
+              if ($page) {
+                  wp_update_nav_menu_item($menu_id, 0, [
+                      'menu-item-title'     => $title,
+                      'menu-item-object'    => 'page',
+                      'menu-item-object-id' => $page->ID,
+                      'menu-item-type'      => 'post_type',
+                      'menu-item-status'    => 'publish',
+                  ]);
+              }
+          }
+
+          // Assign to primary location
+          $locs = get_nav_menu_locations();
+          $locs['primary'] = $menu_id;
+          set_theme_mod('nav_menu_locations', $locs);
+
+          echo "done: $menu_id";
+
+    - name: Run menu setup
+      command: "{{ wp }} eval-file /tmp/setup-menu.php"
+      changed_when: true
+
+    - name: Remove menu setup temp file
+      file:
+        path: /tmp/setup-menu.php
+        state: absent
+
+    # ── mu-plugin: breadcrumbs, footer links, page title on front page ────────
+
+    - name: Deploy Storefront cleanup mu-plugin
+      copy:
+        dest: "/var/www/{{ server_domain }}/wp-content/mu-plugins/storefront-cleanup.php"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        content: |
+          <?php
+          /**
+           * Storefront theme cleanup.
+           * - Removes WooCommerce breadcrumbs on all pages
+           * - Removes Storefront auto-injected footer links
+           * - Removes WooCommerce credit link in footer
+           * - Hides page title (entry-header) on the static front page
+           */
+
+          // Remove sidebar entirely — must run after theme loads (mu-plugins fire before theme)
+          add_action('after_setup_theme', function () {
+              remove_action('storefront_sidebar', 'storefront_get_sidebar', 10);
+          }, 20);
+
+          // Remove breadcrumbs
+          add_action('init', function () {
+              remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20);
+          });
+
+          // Remove Storefront's footer navigation links (My Account / Search / Cart)
+          remove_action('storefront_footer', 'storefront_footer_links', 10);
+
+          // Remove WooCommerce credit link
+          add_filter('storefront_credit_links_output', '__return_empty_string');
+
+          // Hide page title on the static front page
+          add_filter('the_title', function ($title, $id = null) {
+              if (is_front_page() && is_page() && (int) get_option('page_on_front') === (int) $id) {
+                  return '';
+              }
+              return $title;
+          }, 10, 2);
+
+          add_filter('storefront_show_page_title', function ($show) {
+              if (is_front_page()) {
+                  return false;
+              }
+              return $show;
+          });
+
+    # ── Custom CSS: final visual polish ───────────────────────────────────────
+
+    - name: Update custom CSS
+      shell: |
+        {{ wp }} option update additional_css '
+        /* ── Global ──────────────────────────────────────────── */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* ── Header ──────────────────────────────────────────── */
+        .site-header { border-bottom: 1px solid #e8e8e8; padding: 0; }
+        .site-branding { padding: 1.2rem 0; }
+        .site-title a { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; text-decoration: none; }
+        .site-description { display: none; }
+        .main-navigation ul li a { font-size: 0.9rem; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; }
+
+        /* ── Hide entry-header (page title) on front page ────── */
+        .home.page .entry-header { display: none !important; }
+
+        /* ── Sidebar (belt-and-suspenders) ───────────────────── */
+        #secondary { display: none !important; }
+        #primary { width: 100% !important; float: none !important; }
+
+        /* ── Breadcrumbs (belt-and-suspenders) ───────────────── */
+        .woocommerce-breadcrumb { display: none !important; }
+
+        /* ── Hero cover block ─────────────────────────────────── */
+        .wp-block-cover.alignfull { width: 100vw; margin-left: calc(50% - 50vw); }
+        .wp-block-cover__inner-container { max-width: 700px; margin: 0 auto; padding: 0 1.5rem; }
+
+        /* ── Section headings ─────────────────────────────────── */
+        .wp-block-heading { color: #1a1a1a; }
+
+        /* ── WooCommerce product grid ─────────────────────────── */
+        ul.products { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1.5rem !important; list-style: none !important; padding: 0 !important; margin: 0 auto !important; max-width: 1200px; }
+        @media (max-width: 900px) { ul.products { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 480px) { ul.products { grid-template-columns: 1fr !important; } }
+        ul.products li.product { border: 1px solid #efefef; border-radius: 8px; overflow: hidden; transition: box-shadow 0.2s; padding: 0 !important; }
+        ul.products li.product:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.09); }
+        ul.products li.product a img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; margin: 0 !important; }
+        ul.products li.product .woocommerce-loop-product__title { font-size: 0.95rem !important; font-weight: 600; padding: 0.75rem 1rem 0.25rem; }
+        ul.products li.product .price { padding: 0 1rem 0.5rem; font-size: 0.9rem; color: #444; }
+        ul.products li.product .button { margin: 0 1rem 1rem; display: block; text-align: center; font-size: 0.85rem; font-weight: 600; border-radius: 4px; padding: 0.6rem 1rem; }
+
+        /* ── Buttons ──────────────────────────────────────────── */
+        .wp-element-button, .button, button, input[type="submit"] { border-radius: 4px !important; font-weight: 600 !important; letter-spacing: 0.02em !important; }
+
+        /* ── Footer: remove widget area gap when empty ────────── */
+        .footer-widgets { display: none; }
+        .site-info { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: #777; border-top: 1px solid #e8e8e8; }
+        .site-footer a { color: #555; }
+        '
+      args:
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Flush rewrite rules and object cache
+      shell: |
+        {{ wp }} rewrite flush
+        {{ wp }} cache flush || true
+      args:
+        executable: /bin/bash
+      changed_when: false

@@ -1,0 +1,41 @@
+---
+# Called by update-product-images.yml once per product via include_tasks + loop.
+# Variables: product (dict with slug, image_url, image_alt), wp, woo_user
+
+- name: "{{ product.slug }} — get product ID"
+  command: >
+    {{ wp }} wc product list
+    --slug={{ product.slug }}
+    --field=id
+    --format=csv
+    --user={{ woo_user }}
+  register: product_id
+  changed_when: false
+  failed_when: product_id.stdout | trim == ""
+
+- name: "{{ product.slug }} — download image to /tmp"
+  shell: >
+    curl -sL "{{ product.image_url }}"
+    -H "Accept: image/jpeg"
+    -o /tmp/{{ product.slug }}.jpg
+    --max-time 60 &&
+    file /tmp/{{ product.slug }}.jpg
+
+- name: "{{ product.slug }} — import image to media library"
+  command: >
+    {{ wp }} media import /tmp/{{ product.slug }}.jpg
+    --title="{{ product.image_alt }}"
+    --alt="{{ product.image_alt }}"
+    --porcelain
+  register: image_id
+
+- name: "{{ product.slug }} — set featured image"
+  command: >
+    {{ wp }} wc product update {{ product_id.stdout | trim }}
+    --images='[{"id":{{ image_id.stdout | trim }}}]'
+    --user={{ woo_user }}
+
+- name: "{{ product.slug }} — clean up temp image"
+  file:
+    path: "/tmp/{{ product.slug }}.jpg"
+    state: absent

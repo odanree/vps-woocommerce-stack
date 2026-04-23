@@ -1,0 +1,285 @@
+---
+# Configures WooCommerce for headless storefront use.
+# Installs CoCart, generates REST API keys, seeds the full product catalog,
+# and deploys a CORS mu-plugin for the Next.js frontend.
+#
+# Run: ansible-playbook -i inventory/hosts woocommerce-products.yml
+#
+# Idempotent: safe to re-run. Skips items that already exist.
+
+- name: WooCommerce headless product setup
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+    woo_user: "{{ wp_admin_user }}"
+
+    products:
+      - name: "Next.js Developer T-Shirt"
+        slug: "nextjs-developer-t-shirt"
+        price: "24.99"
+        description: "Show off your Next.js skills with this comfortable developer tee."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1521572163474-6864f9cf17ab.jpg?v=1762161935"
+        image_alt: "Next.js Developer T-Shirt"
+      - name: "React Developer T-Shirt"
+        slug: "react-developer-t-shirt"
+        price: "26.99"
+        description: "Built with React? Wear it proudly."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1503342217505-b0a15ec3261c.jpg?v=1762161936"
+        image_alt: "React Developer T-Shirt"
+      - name: "Shopify Developer T-Shirt"
+        slug: "shopify-developer-t-shirt"
+        price: "30.99"
+        description: "For the merchants and builders on the Shopify platform."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1583743814966-8936f5b7be1a.jpg?v=1762161938"
+        image_alt: "Shopify Developer T-Shirt"
+      - name: "TypeScript Master T-Shirt"
+        slug: "typescript-master-t-shirt"
+        price: "28.99"
+        description: "Type safety is not optional. Neither is this shirt."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1556821840-3a63f95609a7.jpg?v=1762161938"
+        image_alt: "TypeScript Master T-Shirt"
+      - name: "Hydrogen React T-Shirt"
+        slug: "hydrogen-react-t-shirt"
+        price: "24.99"
+        description: "Headless commerce starts with Hydrogen."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1622470953794-aa9c70b0fb9d.jpg?v=1762161940"
+        image_alt: "Hydrogen React T-Shirt"
+      - name: "Headless Commerce T-Shirt"
+        slug: "headless-commerce-t-shirt"
+        price: "32.99"
+        description: "Decoupled, fast, and API-first. Just like you."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1618354691373-d851c5c3a990.jpg?v=1762161940"
+        image_alt: "Headless Commerce T-Shirt"
+      - name: "CSS Modules T-Shirt"
+        slug: "css-modules-t-shirt"
+        price: "28.99"
+        description: "Scoped styles, zero conflicts."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1562157873-818bc0726f68.jpg?v=1762161941"
+        image_alt: "CSS Modules T-Shirt"
+      - name: "Cypress E2E T-Shirt"
+        slug: "cypress-e2e-t-shirt"
+        price: "26.99"
+        description: "Test everything. Trust nothing. Ship confidently."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1620799140408-edc6dcb6d633.jpg?v=1762162052"
+        image_alt: "Cypress E2E T-Shirt"
+      - name: "VS Code Developer T-Shirt"
+        slug: "vscode-developer-t-shirt"
+        price: "32.99"
+        description: "Your favourite editor, now on a shirt."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1484480974693-6ca0a78fb36b.jpg?v=1762161942"
+        image_alt: "VS Code Developer T-Shirt"
+      - name: "GraphQL Expert T-Shirt"
+        slug: "graphql-expert-t-shirt"
+        price: "30.99"
+        description: "Ask for exactly what you need."
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1523381210434-271e8be1f52b.jpg?v=1762161945"
+        image_alt: "GraphQL Expert T-Shirt"
+
+  tasks:
+
+    # ── CoCart ────────────────────────────────────────────────────────────────
+
+    - name: Check if CoCart is installed
+      command: "{{ wp }} plugin is-installed cart-rest-api-for-woocommerce"
+      register: cocart_installed
+      failed_when: false
+      changed_when: false
+
+    - name: Install and activate CoCart
+      command: "{{ wp }} plugin install cart-rest-api-for-woocommerce --activate"
+      when: cocart_installed.rc != 0
+
+    # ── WooCommerce settings ──────────────────────────────────────────────────
+
+    - name: Set WooCommerce currency to USD
+      command: "{{ wp }} option update woocommerce_currency USD"
+      changed_when: false
+
+    - name: Set WooCommerce base country to US
+      command: "{{ wp }} option update woocommerce_default_country US:CA"
+      changed_when: false
+
+    - name: Enable WooCommerce REST API
+      command: "{{ wp }} option update woocommerce_api_enabled yes"
+      changed_when: false
+
+    # ── REST API key ──────────────────────────────────────────────────────────
+
+    - name: Check for existing headless REST API key
+      command: >
+        {{ wp }} wc consumer_key list
+        --search="Headless Next.js"
+        --format=count
+        --user={{ woo_user }}
+      register: api_key_count
+      failed_when: false
+      changed_when: false
+
+    - name: Generate WooCommerce REST API key
+      command: >
+        {{ wp }} wc consumer_key create
+        --description="Headless Next.js"
+        --permissions=read_write
+        --user={{ woo_user }}
+        --format=json
+      register: api_key_result
+      when: api_key_count.stdout | trim == "0"
+
+    - name: Display REST API credentials — save these to .env
+      debug:
+        msg: "{{ api_key_result.stdout }}"
+      when:
+        - api_key_count.stdout | trim == "0"
+        - api_key_result is defined
+
+    # ── CORS mu-plugin ────────────────────────────────────────────────────────
+
+    - name: Create mu-plugins directory
+      file:
+        path: "/var/www/{{ server_domain }}/wp-content/mu-plugins"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Deploy CORS mu-plugin for headless frontend
+      copy:
+        dest: "/var/www/{{ server_domain }}/wp-content/mu-plugins/headless-cors.php"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        content: |
+          <?php
+          /**
+           * Allow CORS for WooCommerce REST API and CoCart from headless frontend origins.
+           * Also relaxes MIME type checking for JPEG imports (Unsplash CDN may return WebP
+           * regardless of fm=jpg parameter — this ensures WP-CLI media imports succeed).
+           * Placed in mu-plugins — auto-loaded by WordPress, no activation required.
+           */
+          add_filter('rest_pre_serve_request', function ($value) {
+              $origin  = get_http_origin();
+              $allowed = [
+                  'https://woocommerce-headless.vercel.app',
+                  'http://localhost:3000',
+              ];
+              if (in_array($origin, $allowed, true)) {
+                  header('Access-Control-Allow-Origin: '  . $origin);
+                  header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+                  header('Access-Control-Allow-Credentials: true');
+                  header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-CoCart-Key');
+              }
+              return $value;
+          }, 15);
+
+          add_filter('wp_check_filetype_and_ext', function ($data, $file, $filename, $mimes) {
+              if (empty($data['ext'])) {
+                  $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                  if (in_array($ext, ['jpg', 'jpeg'], true)) {
+                      return ['ext' => 'jpg', 'type' => 'image/jpeg', 'proper_filename' => false];
+                  }
+              }
+              return $data;
+          }, 10, 4);
+
+    # ── Size attribute ────────────────────────────────────────────────────────
+
+    - name: List existing product attributes
+      command: >
+        {{ wp }} wc product_attribute list
+        --format=json
+        --user={{ woo_user }}
+      register: attr_list
+      changed_when: false
+      failed_when: false
+
+    - name: Create Size product attribute
+      command: >
+        {{ wp }} wc product_attribute create
+        --name="Size"
+        --slug="size"
+        --type=select
+        --order_by=menu_order
+        --has_archives=true
+        --user={{ woo_user }}
+        --porcelain
+      when: attr_list.stdout == "" or "'pa_size' not in attr_list.stdout"
+      failed_when: false
+
+    - name: Fetch Size attribute ID
+      command: >
+        {{ wp }} wc product_attribute list
+        --format=json
+        --user={{ woo_user }}
+      register: attr_list_final
+      changed_when: false
+
+    - name: Set size attribute ID fact
+      set_fact:
+        size_attr_id: >-
+          {{ (attr_list_final.stdout | from_json
+              | selectattr('slug', 'equalto', 'pa_size')
+              | list | first).id }}
+
+    - name: Create Size attribute terms (S, M, L, XL)
+      command: >
+        {{ wp }} wc product_attribute_term create {{ size_attr_id }}
+        --name="{{ item }}"
+        --user={{ woo_user }}
+        --porcelain
+      loop:
+        - S
+        - M
+        - L
+        - XL
+      register: term_create
+      failed_when: false
+      changed_when: term_create.rc == 0
+
+    # ── Product category ──────────────────────────────────────────────────────
+
+    - name: Check if Developer T-Shirts category exists
+      command: >
+        {{ wp }} wc product_cat list
+        --slug=developer-t-shirts
+        --format=count
+        --user={{ woo_user }}
+      register: cat_count
+      changed_when: false
+      failed_when: false
+
+    - name: Create Developer T-Shirts product category
+      command: >
+        {{ wp }} wc product_cat create
+        --name="Developer T-Shirts"
+        --slug="developer-t-shirts"
+        --user={{ woo_user }}
+        --porcelain
+      when: cat_count.stdout | trim == "0"
+      failed_when: false
+
+    - name: Fetch Developer T-Shirts category ID
+      command: >
+        {{ wp }} wc product_cat list
+        --slug=developer-t-shirts
+        --field=id
+        --format=csv
+        --user={{ woo_user }}
+      register: cat_id_result
+      changed_when: false
+
+    - name: Set category ID fact
+      set_fact:
+        product_cat_id: "{{ cat_id_result.stdout | trim }}"
+
+    # ── Products ──────────────────────────────────────────────────────────────
+
+    - name: Create variable products
+      include_tasks: tasks/woocommerce-product.yml
+      loop: "{{ products }}"
+      loop_control:
+        loop_var: product
+        label: "{{ product.name }}"
