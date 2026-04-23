@@ -1,4 +1,5 @@
 provisioning/inventory/hosts
+provisioning/inventory/hosts.yml
 provisioning/group_vars/all.yml
 *.retry
 .vault_pass
@@ -7,6 +8,7 @@ provisioning/group_vars/all.yml
 *.crt
 secrets/
 .env
+.lla-*.json
 
 # Terraform
 terraform/digitalocean/terraform.tfvars

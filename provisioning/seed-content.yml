@@ -113,6 +113,33 @@
         loop_var: post
         label: "{{ post.title }}"
 
-    - name: Set homepage to show latest posts
-      command: "{{ wp }} option update show_on_front posts"
+    # ── Blog page ─────────────────────────────────────────────────────────────
+    # Posts live at /blog — homepage is reserved for the headless Next.js frontend.
+
+    - name: Check if Blog page already exists
+      command: >
+        {{ wp }} post list --post_type=page
+        --name=blog --field=ID --format=csv
+      register: blog_page
+      changed_when: false
+
+    - name: Create Blog page
+      command: >
+        {{ wp }} post create
+        --post_title="Blog"
+        --post_name="blog"
+        --post_status=publish
+        --post_type=page
+        --porcelain
+      register: blog_page_id
+      when: blog_page.stdout | trim == ""
+
+    - name: Set reading settings — use static front page
+      command: "{{ wp }} option update show_on_front page"
+      changed_when: false
+
+    - name: Point posts page to Blog
+      command: >
+        {{ wp }} option update page_for_posts
+        {{ blog_page_id.stdout | trim if blog_page.stdout | trim == "" else blog_page.stdout | trim }}
       changed_when: false
