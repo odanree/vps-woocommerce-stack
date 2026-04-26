@@ -1,0 +1,52 @@
+---
+# Lightweight deploy playbook — runs on every push to master.
+# Only syncs files and restarts services. Use site.yml for full reprovisioning.
+# Run: ansible-playbook -i inventory/hosts deploy.yml
+
+- name: Deploy vps-woocommerce-stack
+  hosts: webservers
+  become: true
+  vars:
+    wp_root: "/var/www/{{ server_domain }}"
+    mu_plugin_dir: "{{ wp_root }}/wp-content/mu-plugins"
+
+  tasks:
+    # ── Sync mu-plugins from repo ─────────────────────────────────────────────
+    - name: Sync storefront-cleanup.php
+      copy:
+        src: "{{ playbook_dir }}/../mu-plugins/storefront-cleanup.php"
+        dest: "{{ mu_plugin_dir }}/storefront-cleanup.php"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+    # ── Pull plugin repos ─────────────────────────────────────────────────────
+    - name: Pull ODR Image Optimizer
+      git:
+        repo: "https://github.com/odanree/odr-image-optimizer.git"
+        dest: "{{ wp_root }}/wp-content/plugins/odr-image-optimizer"
+        version: main
+        update: true
+      become_user: www-data
+
+    - name: Pull payment gateway plugin
+      git:
+        repo: "https://github.com/odanree/woocommerce-payment-gateway.git"
+        dest: "{{ wp_root }}/wp-content/plugins/woocommerce-payment-gateway"
+        version: master
+        update: true
+      become_user: www-data
+
+    # ── Flush caches ──────────────────────────────────────────────────────────
+    - name: Flush Redis object cache
+      command: >
+        wp cache flush
+        --path={{ wp_root }}
+        --allow-root
+      changed_when: false
+      failed_when: false
+
+    - name: Reload PHP-FPM
+      systemd:
+        name: "php{{ php_version }}-fpm"
+        state: reloaded

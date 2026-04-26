@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  DROPLET_ID: 565607248
+  SNAPSHOT_PREFIX: shop-pre-deploy
+
+jobs:
+  snapshot:
+    name: Snapshot droplet
+    runs-on: ubuntu-latest
+    outputs:
+      snapshot_id: ${{ steps.create.outputs.snapshot_id }}
+    steps:
+      - name: Create pre-deploy snapshot
+        id: create
+        run: |
+          SNAPSHOT_NAME="${SNAPSHOT_PREFIX}-$(date +%Y%m%d-%H%M%S)"
+          echo "Creating snapshot: $SNAPSHOT_NAME"
+
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"type\":\"snapshot\",\"name\":\"$SNAPSHOT_NAME\"}" \
+            "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions")
+
+          ACTION_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['action']['id'])")
+          echo "Snapshot action ID: $ACTION_ID"
+
+          # Wait for snapshot to complete (up to 15 minutes)
+          for i in $(seq 1 90); do
+            STATUS=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+              "https://api.digitalocean.com/v2/actions/$ACTION_ID" \
+              | python3 -c "import sys,json; print(json.load(sys.stdin)['action']['status'])")
+            echo "[$i/90] Status: $STATUS"
+            if [ "$STATUS" = "completed" ]; then
+              break
+            elif [ "$STATUS" = "errored" ]; then
+              echo "Snapshot failed" && exit 1
+            fi
+            sleep 10
+          done
+
+          # Get the snapshot ID
+          SNAPSHOT_ID=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/snapshots" \
+            | python3 -c "import sys,json; snaps=json.load(sys.stdin)['snapshots']; print(sorted(snaps, key=lambda s: s['created_at'])[-1]['id'])")
+
+          echo "Snapshot ID: $SNAPSHOT_ID"
+          echo "snapshot_id=$SNAPSHOT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Prune snapshots older than 7 days
+        run: |
+          curl -s \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/snapshots" \
+            | python3 -c "
+          import sys, json
+          from datetime import datetime, timezone, timedelta
+
+          snaps = json.load(sys.stdin)['snapshots']
+          cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+          old = [s for s in snaps if datetime.fromisoformat(s['created_at'].replace('Z','+00:00')) < cutoff]
+          for s in old:
+              print(s['id'], s['name'], s['created_at'])
+          " | while read -r id name created; do
+            echo "Deleting old snapshot: $name ($created)"
+            curl -s -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+              "https://api.digitalocean.com/v2/snapshots/$id"
+          done
+
+  deploy:
+    name: Ansible deploy
+    runs-on: ubuntu-latest
+    needs: snapshot
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Write inventory and vars
+        run: |
+          cat > provisioning/inventory/hosts <<EOF
+          [webservers]
+          159.203.94.25 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+          [webservers:vars]
+          ansible_python_interpreter=/usr/bin/python3
+          EOF
+          echo "${{ secrets.ANSIBLE_VARS }}" > provisioning/group_vars/all.yml
+
+      - name: Run Ansible deploy
+        run: |
+          cd provisioning
+          ansible-playbook -i inventory/hosts deploy.yml
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deploy failed. Restore from snapshot ID: ${{ needs.snapshot.outputs.snapshot_id }}"
+          echo "Run: doctl compute droplet-action restore $DROPLET_ID --image ${{ needs.snapshot.outputs.snapshot_id }}"
+          echo "Or restore via DigitalOcean dashboard: https://cloud.digitalocean.com/droplets/$DROPLET_ID/snapshots"
