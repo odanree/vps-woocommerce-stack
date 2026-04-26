@@ -89,9 +89,9 @@ jobs:
       - name: Write SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          printf '%s' "${{ secrets.VPS_DEPLOY_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
       - name: Write inventory and vars
         run: |
