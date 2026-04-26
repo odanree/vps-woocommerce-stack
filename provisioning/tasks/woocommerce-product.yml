@@ -1,0 +1,78 @@
+---
+# Called by woocommerce-products.yml once per product via include_tasks + loop.
+# Variables: product (dict), wp, woo_user, size_attr_id, product_cat_id
+
+- name: "{{ product.name }} — check if product exists"
+  command: >
+    {{ wp }} wc product list
+    --slug={{ product.slug }}
+    --format=count
+    --user={{ woo_user }}
+  register: product_exists
+  changed_when: false
+  failed_when: false
+
+- name: "{{ product.name }} — download image to /tmp"
+  shell: >
+    curl -sL "{{ product.image_url }}"
+    -H "Accept: image/jpeg"
+    -o /tmp/{{ product.slug }}.jpg
+    --max-time 60 &&
+    file /tmp/{{ product.slug }}.jpg
+  when: product_exists.stdout | trim == "0"
+
+- name: "{{ product.name }} — import image to media library"
+  command: >
+    {{ wp }} media import /tmp/{{ product.slug }}.jpg
+    --title="{{ product.name }}"
+    --alt="{{ product.image_alt }}"
+    --porcelain
+  register: image_id
+  when: product_exists.stdout | trim == "0"
+
+- name: "{{ product.name }} — create variable product"
+  command: >
+    {{ wp }} wc product create
+    --name="{{ product.name }}"
+    --slug="{{ product.slug }}"
+    --type=variable
+    --status=publish
+    --description="{{ product.description }}"
+    --categories='[{"id":{{ product_cat_id }}}]'
+    --attributes='[{"id":{{ size_attr_id }},"variation":true,"visible":true,"options":["S","M","L","XL"]}]'
+    --user={{ woo_user }}
+    --porcelain
+  register: product_id
+  when: product_exists.stdout | trim == "0"
+
+- name: "{{ product.name }} — set featured image"
+  command: >
+    {{ wp }} wc product update {{ product_id.stdout | trim }}
+    --images='[{"id":{{ image_id.stdout | trim }}}]'
+    --user={{ woo_user }}
+  when:
+    - product_exists.stdout | trim == "0"
+    - product_id.stdout is defined
+    - image_id.stdout is defined
+
+- name: "{{ product.name }} — create size variations"
+  command: >
+    {{ wp }} wc product_variation create {{ product_id.stdout | trim }}
+    --attributes='[{"id":{{ size_attr_id }},"option":"{{ item }}"}]'
+    --regular_price="{{ product.price }}"
+    --user={{ woo_user }}
+    --porcelain
+  loop:
+    - S
+    - M
+    - L
+    - XL
+  when:
+    - product_exists.stdout | trim == "0"
+    - product_id.stdout is defined
+
+- name: "{{ product.name }} — clean up temp image"
+  file:
+    path: "/tmp/{{ product.slug }}.jpg"
+    state: absent
+  when: product_exists.stdout | trim == "0"

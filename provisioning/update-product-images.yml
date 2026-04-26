@@ -1,0 +1,55 @@
+---
+# Updates featured images on existing WooCommerce products to match the Shopify CDN source.
+# Run after woocommerce-products.yml if images need to be corrected.
+#
+# Run: ansible-playbook -i inventory/hosts update-product-images.yml
+
+- name: Update WooCommerce product images
+  hosts: webservers
+  become: true
+  become_user: www-data
+  gather_facts: false
+
+  vars:
+    wp: "wp --path=/var/www/{{ server_domain }} --allow-root"
+    woo_user: "{{ wp_admin_user }}"
+
+    products:
+      - slug: "nextjs-developer-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1521572163474-6864f9cf17ab.jpg?v=1762161935"
+        image_alt: "Next.js Developer T-Shirt"
+      - slug: "react-developer-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1503342217505-b0a15ec3261c.jpg?v=1762161936"
+        image_alt: "React Developer T-Shirt"
+      - slug: "shopify-developer-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1583743814966-8936f5b7be1a.jpg?v=1762161938"
+        image_alt: "Shopify Developer T-Shirt"
+      - slug: "typescript-master-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1556821840-3a63f95609a7.jpg?v=1762161938"
+        image_alt: "TypeScript Master T-Shirt"
+      - slug: "hydrogen-react-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1622470953794-aa9c70b0fb9d.jpg?v=1762161940"
+        image_alt: "Hydrogen React T-Shirt"
+      - slug: "headless-commerce-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1618354691373-d851c5c3a990.jpg?v=1762161940"
+        image_alt: "Headless Commerce T-Shirt"
+      - slug: "css-modules-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1562157873-818bc0726f68.jpg?v=1762161941"
+        image_alt: "CSS Modules T-Shirt"
+      - slug: "cypress-e2e-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1620799140408-edc6dcb6d633.jpg?v=1762162052"
+        image_alt: "Cypress E2E T-Shirt"
+      - slug: "vscode-developer-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1484480974693-6ca0a78fb36b.jpg?v=1762161942"
+        image_alt: "VS Code Developer T-Shirt"
+      - slug: "graphql-expert-t-shirt"
+        image_url: "https://cdn.shopify.com/s/files/1/0714/9771/1661/files/photo-1523381210434-271e8be1f52b.jpg?v=1762161945"
+        image_alt: "GraphQL Expert T-Shirt"
+
+  tasks:
+    - name: Update product images
+      include_tasks: tasks/update-product-image.yml
+      loop: "{{ products }}"
+      loop_control:
+        loop_var: product
+        label: "{{ product.slug }}"
