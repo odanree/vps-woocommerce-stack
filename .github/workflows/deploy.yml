@@ -28,8 +28,6 @@ jobs:
             -d "{\"type\":\"snapshot\",\"name\":\"$SNAPSHOT_NAME\"}" \
             "https://api.digitalocean.com/v2/droplets/$DROPLET_ID/actions")
 
-          echo "API response: $RESPONSE"
-
           ACTION_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['action']['id'])")
           echo "Snapshot action ID: $ACTION_ID"
 
