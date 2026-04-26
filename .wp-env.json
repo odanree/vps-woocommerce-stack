@@ -1,0 +1,27 @@
+{
+  "core": null,
+  "phpVersion": "8.1",
+  "plugins": [
+    "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip",
+    "../odr-image-optimizer"
+  ],
+  "themes": [
+    "https://downloads.wordpress.org/theme/storefront.zip"
+  ],
+  "mappings": {
+    "wp-content/mu-plugins/storefront-cleanup.php": "./mu-plugins/storefront-cleanup.php",
+    "wp-content/mu-plugins/seed.php": "./mu-plugins/seed.php"
+  },
+  "port": 9080,
+  "testsPort": 9091,
+  "testsEnvironment": false,
+  "env": {
+    "development": {
+      "config": {
+        "WP_DEBUG": true,
+        "WP_DEBUG_LOG": true,
+        "WP_MEMORY_LIMIT": "256M"
+      }
+    }
+  }
+}

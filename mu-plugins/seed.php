@@ -7,7 +7,7 @@
  * Delete this file (or flip SEED_DONE option) to re-seed.
  */
 
-add_action('init', function () {
+add_action('woocommerce_init', function () {
     // Run once — guard against re-seeding on every page load
     if (get_option('_sf_seed_done')) {
         return;
@@ -95,7 +95,7 @@ add_action('init', function () {
         $product_id = $product->save();
 
         // Use a placeholder image (via placeholder service) as featured image
-        $image_url = 'https://placehold.co/600x600/' . $data['color'] . '/ffffff/png?text=' . urlencode($data['name']);
+        $image_url = 'https://picsum.photos/seed/' . urlencode($data['name']) . '/600/600';
         $image_id  = _sf_sideload_image($image_url, $product_id, $data['name']);
         if ($image_id && !is_wp_error($image_id)) {
             set_post_thumbnail($product_id, $image_id);
