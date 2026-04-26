@@ -95,9 +95,10 @@ jobs:
           printf '%s\n' "${{ secrets.VPS_DEPLOY_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-          echo "Key first line: $(head -1 ~/.ssh/id_rsa)"
           echo "Key line count: $(wc -l < ~/.ssh/id_rsa)"
           echo "Key has CR chars: $(cat ~/.ssh/id_rsa | xxd | grep -c '0d 0a' || echo 0)"
+          ssh-keygen -l -f ~/.ssh/id_rsa 2>&1 || true
+          ssh -V
 
       - name: Write inventory and vars
         run: |
