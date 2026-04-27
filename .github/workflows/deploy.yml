@@ -95,9 +95,6 @@ jobs:
           printf '%s\n' "${{ secrets.VPS_DEPLOY_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-          echo "Key line count: $(wc -l < ~/.ssh/id_rsa)"
-          grep -c "BEGIN\|END" ~/.ssh/id_rsa && echo "Has valid PEM headers" || echo "Missing PEM headers"
-          ssh-keygen -y -f ~/.ssh/id_rsa -P "" > /dev/null 2>&1 && echo "Key valid, no passphrase" || echo "Key invalid or has passphrase"
 
       - name: Write inventory and vars
         run: |
