@@ -89,21 +89,33 @@ jobs:
       - name: Install Ansible
         run: pip install ansible
 
-      - name: Write SSH key
+      # Replaces the manual key-write that kept hitting `error in libcrypto`.
+      # webfactory/ssh-agent normalizes line endings and key formats, loads
+      # the key into a per-job ssh-agent, and exposes it to all subsequent
+      # steps via SSH_AUTH_SOCK — no on-disk key file needed.
+      - name: Start ssh-agent with deploy key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_DEPLOY_KEY }}
+
+      # Diagnostic: ssh-add -l prints only key fingerprints + comments,
+      # never key material. If the agent loaded nothing, the step above
+      # would have failed outright — this is belt-and-suspenders.
+      - name: Confirm key is loaded in agent
+        run: ssh-add -l
+
+      - name: Write known_hosts
         env:
-          VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_DEPLOY_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
           printf '%s\n' "$VPS_KNOWN_HOSTS" >> ~/.ssh/known_hosts
 
       - name: Write inventory and vars
         run: |
           cat > provisioning/inventory/hosts <<EOF
           [webservers]
-          159.203.94.25 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+          159.203.94.25 ansible_user=ubuntu
 
           [webservers:vars]
           ansible_python_interpreter=/usr/bin/python3
